@@ -87,8 +87,9 @@ export function ClienteLine({
         });
         toast.success("Datos obtenidos de la entidad.");
       } else {
-        toast.error(
-          "No se pudo consultar la entidad. Registre los datos manualmente.",
+        toast.warning(
+          "No se encontraron datos en la entidad. Complete los datos manualmente y presione el botón de guardar.",
+          { duration: 6000 },
         );
       }
     } finally {

@@ -1,0 +1,467 @@
+"use client";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import {
+  Pencil,
+  Trash2,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  ArrowUp,
+  ArrowDown,
+  ChevronsUpDown,
+} from "lucide-react";
+
+export interface KardexRow {
+  id: string;
+  fecha: string;
+  codigo: string;
+  descripcion: string;
+  observacion: string;
+  responsable_del_registro: string;
+  tipo_operacion: string;
+  operacion_codigo: string;
+
+  entrada_und: number;
+  entrada_peso_kg: number;
+  entrada_peso_total: number;
+
+  salida_und: number;
+  salida_peso_unitario: number;
+  salida_peso_total: number;
+
+  saldo_und: number;
+  saldo_peso_kg: number;
+  saldo_peso_total: number;
+
+  motivo_salida_formulacion: string | null;
+  responsable_formulacion: string | null;
+  cantidad_producto_formulado: number | null;
+  almacenamiento: string | null;
+}
+
+export type SortKey =
+  | "fecha"
+  | "entrada_und"
+  | "entrada_peso_total"
+  | "salida_und"
+  | "salida_peso_total"
+  | "saldo_und"
+  | "saldo_peso_total";
+
+export interface SortState {
+  key: SortKey;
+  dir: "asc" | "desc";
+}
+
+interface KardexTotals {
+  entradaUnd: number;
+  entradaPeso: number;
+  salidaUnd: number;
+  salidaPeso: number;
+  saldoUnd: number;
+  saldoPeso: number;
+}
+
+interface KardexTableProps {
+  rows: KardexRow[];
+  onEditar?: (row: KardexRow) => void;
+  onEliminar?: (row: KardexRow) => void;
+  sort?: SortState | null;
+  onSort?: (key: SortKey) => void;
+  totals?: KardexTotals;
+}
+
+const fmt = (n: number | null | undefined) =>
+  n === null || n === undefined || n === 0 ? (
+    <span className="text-muted-foreground/50">—</span>
+  ) : (
+    n.toLocaleString("es-PE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+
+const fmtInt = (n: number | null | undefined) =>
+  n === null || n === undefined || n === 0 ? (
+    <span className="text-muted-foreground/50">—</span>
+  ) : (
+    n.toLocaleString("es-PE")
+  );
+
+function SortHead({
+  label,
+  activeDir,
+  onClick,
+  className,
+}: {
+  label: string;
+  activeDir?: "asc" | "desc";
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-0.5 uppercase tracking-wide transition-colors hover:text-foreground",
+        className
+      )}
+    >
+      {label}
+      {activeDir ? (
+        activeDir === "asc" ? (
+          <ArrowUp className="h-3 w-3" />
+        ) : (
+          <ArrowDown className="h-3 w-3" />
+        )
+      ) : (
+        <ChevronsUpDown className="h-3 w-3 opacity-40" />
+      )}
+    </button>
+  );
+}
+export default function KardexTable({
+  rows,
+  onEditar,
+  onEliminar,
+  sort,
+  onSort,
+  totals,
+}: KardexTableProps) {
+  return (
+    <div className="w-full overflow-hidden rounded-lg border">
+      <div className="w-full overflow-x-auto">
+      <Table className="min-w-[1180px] border-collapse text-[11px] leading-tight">
+        <TableHeader>
+          {/* Fila 1: grupos */}
+          <TableRow className="hover:bg-primary/90">
+            <TableHead
+              colSpan={5}
+              className="border-r border-primary/30 text-center text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+              Detalle del Registro
+            </TableHead>
+            <TableHead className="border-r border-primary/30 text-center text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+              Operación
+            </TableHead>
+            <TableHead
+              colSpan={3}
+              className="border-r border-primary/30 text-center text-[10px] font-bold uppercase tracking-wider text-emerald-200">
+              Entradas
+            </TableHead>
+            <TableHead
+              colSpan={3}
+              className="border-r border-primary/30 text-center text-[10px] font-bold uppercase tracking-wider text-red-200">
+              Salidas
+            </TableHead>
+            <TableHead
+              colSpan={3}
+              className="border-r border-primary/30 text-center text-[10px] font-bold uppercase tracking-wider text-sky-200">
+              Saldo Final
+            </TableHead>
+            <TableHead className="border-r border-primary/30 text-center text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+              Motivo Salida
+            </TableHead>
+            <TableHead
+              colSpan={3}
+              className="border-r border-primary/30 text-center text-[10px] font-bold uppercase tracking-wider text-violet-200">
+              Registro Final
+            </TableHead>
+            <TableHead className="text-center text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
+              Acción
+            </TableHead>
+          </TableRow>
+{/* Fila 2: columnas */}
+          <TableRow className="bg-muted hover:bg-muted">
+            <TableHead className="py-1.5 text-center">
+              <SortHead
+                label="Fecha"
+                onClick={() => onSort?.("fecha")}
+                activeDir={sort?.key === "fecha" ? sort.dir : undefined}
+                className="text-muted-foreground"
+              />
+            </TableHead>
+            <TableHead className="py-1.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+              Código
+            </TableHead>
+            <TableHead className="py-1.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+              Descripción
+            </TableHead>
+            <TableHead className="py-1.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+              Observación
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+              Responsable
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+              Tipo
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center">
+              <SortHead
+                label="Und"
+                onClick={() => onSort?.("entrada_und")}
+                activeDir={sort?.key === "entrada_und" ? sort.dir : undefined}
+                className="text-emerald-600 dark:text-emerald-400"
+              />
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-emerald-600 dark:text-emerald-400">
+              Peso Kg
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center">
+              <SortHead
+                label="Total"
+                onClick={() => onSort?.("entrada_peso_total")}
+                activeDir={sort?.key === "entrada_peso_total" ? sort.dir : undefined}
+                className="text-emerald-600 dark:text-emerald-400"
+              />
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center">
+              <SortHead
+                label="Und"
+                onClick={() => onSort?.("salida_und")}
+                activeDir={sort?.key === "salida_und" ? sort.dir : undefined}
+                className="text-red-500 dark:text-red-400"
+              />
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-red-500 dark:text-red-400">
+              Peso Kg
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center">
+              <SortHead
+                label="Total"
+                onClick={() => onSort?.("salida_peso_total")}
+                activeDir={sort?.key === "salida_peso_total" ? sort.dir : undefined}
+                className="text-red-500 dark:text-red-400"
+              />
+            </TableHead>
+<TableHead className="border-r border-border py-1.5 text-center">
+              <SortHead
+                label="Und"
+                onClick={() => onSort?.("saldo_und")}
+                activeDir={sort?.key === "saldo_und" ? sort.dir : undefined}
+                className="text-sky-600 dark:text-sky-400"
+              />
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-sky-600 dark:text-sky-400">
+              Peso Kg
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center">
+              <SortHead
+                label="Total"
+                onClick={() => onSort?.("saldo_peso_total")}
+                activeDir={sort?.key === "saldo_peso_total" ? sort.dir : undefined}
+                className="text-sky-600 dark:text-sky-400"
+              />
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-muted-foreground">
+              Tipo
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-violet-600 dark:text-violet-400">
+              Resp.
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-violet-600 dark:text-violet-400">
+              Cant.
+            </TableHead>
+            <TableHead className="border-r border-border py-1.5 text-center text-[10px] font-semibold uppercase text-violet-600 dark:text-violet-400">
+              Almacén
+            </TableHead>
+            <TableHead className="py-1.5 text-center" />
+          </TableRow>
+        </TableHeader>
+<TableBody>
+          {rows.map((row) => {
+            const isSalida = row.salida_und > 0;
+            return (
+              <TableRow
+                key={row.id}
+                className={cn(
+                  "border-b border-border text-center transition-colors hover:bg-muted/70",
+                  isSalida
+                    ? "bg-red-50/40 dark:bg-red-950/10"
+                    : "bg-emerald-50/30 dark:bg-emerald-950/5"
+                )}>
+                <TableCell className="py-1.5 whitespace-nowrap text-muted-foreground">
+                  {row.fecha}
+                </TableCell>
+                <TableCell className="py-1.5 whitespace-nowrap font-semibold text-foreground">
+                  <Badge variant="outline" className="bg-muted font-mono text-[10px]">
+                    {row.codigo}
+                  </Badge>
+                </TableCell>
+                <TableCell className="py-1.5 text-foreground">
+                  {row.descripcion}
+                </TableCell>
+                <TableCell
+                  title={row.observacion || undefined}
+                  className="max-w-[100px] truncate py-1.5 uppercase text-muted-foreground">
+                  {row.observacion || (
+                    <span className="text-muted-foreground/50">—</span>
+                  )}
+                </TableCell>
+                <TableCell
+                  title={row.responsable_del_registro}
+                  className="max-w-[120px] truncate py-1.5 text-muted-foreground">
+                  {row.responsable_del_registro}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "whitespace-nowrap text-[9px] font-semibold",
+                      isSalida
+                        ? "border-red-200 bg-red-100/60 text-red-700 dark:border-red-900 dark:bg-red-900/30 dark:text-red-300"
+                        : "border-emerald-200 bg-emerald-100/60 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-300"
+                    )}>
+                    {row.tipo_operacion}
+                  </Badge>
+                </TableCell>
+{/* Entradas */}
+                <TableCell className="border-r border-border py-1.5 font-medium text-foreground">
+                  {row.entrada_und > 0 ? (
+                    <span className="inline-flex items-center gap-1">
+                      <ArrowDownCircle className="h-3 w-3 text-emerald-500" />
+                      {fmtInt(row.entrada_und)}
+                    </span>
+                  ) : (
+                    fmtInt(row.entrada_und)
+                  )}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 text-muted-foreground">
+                  {fmt(row.entrada_peso_kg)}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 font-medium text-emerald-600 dark:text-emerald-400">
+                  {fmt(row.entrada_peso_total)}
+                </TableCell>
+
+                {/* Salidas */}
+                <TableCell className="border-r border-border py-1.5 font-medium text-foreground">
+                  {row.salida_und > 0 ? (
+                    <span className="inline-flex items-center gap-1">
+                      <ArrowUpCircle className="h-3 w-3 text-red-500" />
+                      {fmtInt(row.salida_und)}
+                    </span>
+                  ) : (
+                    fmtInt(row.salida_und)
+                  )}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 text-muted-foreground">
+                  {fmt(row.salida_peso_unitario)}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 font-medium text-red-500">
+                  {fmt(row.salida_peso_total)}
+                </TableCell>
+
+                {/* Saldo */}
+                <TableCell className="border-r border-border py-1.5 font-medium text-foreground">
+                  {fmtInt(row.saldo_und)}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 text-muted-foreground">
+                  {fmt(row.saldo_peso_kg)}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 font-semibold text-blue-500">
+                  {fmt(row.saldo_peso_total)}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 font-semibold text-foreground">
+                  {row.motivo_salida_formulacion}
+                </TableCell>
+                {/* Registro final */}
+                <TableCell
+                  title={row.responsable_formulacion || undefined}
+                  className="max-w-[120px] truncate border-r border-border py-1.5 text-muted-foreground">
+                  {row.responsable_formulacion || (
+                    <span className="text-muted-foreground/50">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="border-r border-border py-1.5 text-muted-foreground">
+                  {fmtInt(row.cantidad_producto_formulado)}
+                </TableCell>
+                <TableCell
+                  title={row.almacenamiento || undefined}
+                  className="max-w-[70px] truncate border-r border-border py-1.5 uppercase text-muted-foreground">
+                  {row.almacenamiento || (
+                    <span className="text-muted-foreground/50">—</span>
+                  )}
+                </TableCell>
+
+                {/* Acciones */}
+                <TableCell className="py-1.5">
+                  <div className="flex items-center justify-center gap-1">
+                    <button
+                      type="button"
+                      title="Editar"
+                      onClick={() => onEditar?.(row)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Eliminar"
+                      onClick={() => onEliminar?.(row)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+
+          {rows.length === 0 && (
+            <TableRow>
+              <TableCell
+                colSpan={20}
+                className="py-12 text-center text-sm text-muted-foreground">
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-2xl">📦</span>
+                  No se encontraron registros de inventario.
+                </div>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+{totals && rows.length > 0 && (
+          <TableFooter>
+            <TableRow className="border-t border-border text-center">
+              <TableCell colSpan={6} className="py-2 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Totales
+              </TableCell>
+              <TableCell className="py-2 font-bold text-emerald-600 dark:text-emerald-400">
+                {fmtInt(totals.entradaUnd)}
+              </TableCell>
+              <TableCell className="py-2 text-muted-foreground">—</TableCell>
+              <TableCell className="py-2 font-bold text-emerald-600 dark:text-emerald-400">
+                {fmt(totals.entradaPeso)}
+              </TableCell>
+              <TableCell className="py-2 font-bold text-red-500">
+                {fmtInt(totals.salidaUnd)}
+              </TableCell>
+              <TableCell className="py-2 text-muted-foreground">—</TableCell>
+              <TableCell className="py-2 font-bold text-red-500">
+                {fmt(totals.salidaPeso)}
+              </TableCell>
+              <TableCell className="py-2 font-bold text-sky-600 dark:text-sky-400">
+                {fmtInt(totals.saldoUnd)}
+              </TableCell>
+              <TableCell className="py-2 text-muted-foreground">—</TableCell>
+              <TableCell className="py-2 font-bold text-blue-500">
+                {fmt(totals.saldoPeso)}
+              </TableCell>
+              <TableCell colSpan={5} className="py-2" />
+            </TableRow>
+          </TableFooter>
+        )}
+      </Table>
+      </div>
+    </div>
+  );
+}

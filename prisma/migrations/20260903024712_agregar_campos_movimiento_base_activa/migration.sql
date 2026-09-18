@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "MovimientoBaseActiva" ADD COLUMN     "saldoPesoUnitarioKg" DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN     "saldoTotalKg" DECIMAL(18,6) NOT NULL DEFAULT 0,
+ADD COLUMN     "saldoUnd" DECIMAL(18,6) NOT NULL DEFAULT 0;

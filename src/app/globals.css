@@ -1,0 +1,437 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-pos-bg: var(--pos-bg);
+  --color-pos-card: var(--pos-card);
+  --color-pos-card-elevated: var(--pos-card-elevated);
+  --color-pos-border: var(--pos-border);
+  --color-pos-input: var(--pos-input);
+  --color-pos-input-border: var(--pos-input-border);
+  --color-pos-soft: var(--pos-soft);
+  --color-pos-tableheader: var(--pos-tableheader);
+  --color-pos-tableheader-hover: var(--pos-tableheader-hover);
+  --color-pos-table-row-hover: var(--pos-table-row-hover);
+  --color-pos-blue: var(--pos-blue);
+  --color-pos-blue-light: var(--pos-blue-light);
+  --color-pos-green: var(--pos-green);
+  --color-pos-green-light: var(--pos-green-light);
+  --color-pos-teal: var(--pos-teal);
+  --color-pos-accent: var(--pos-accent);
+  --color-pos-badge: var(--pos-badge);
+  --color-pos-quick-chip: var(--pos-quick-chip);
+  --color-pos-quick-chip-hover: var(--pos-quick-chip-hover);
+  --color-pos-quick-chip-border: var(--pos-quick-chip-border);
+  --color-pos-shadow: var(--pos-shadow);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+  Tema claro: fondo blanco con acentos verdes esmeralda.
+  Sidebar con fondo ligeramente gris para diferenciarse del contenido.
+*/
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #334155;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #10b981;
+
+  --chart-1: #10b981;
+  --chart-2: #38bdf8;
+  --chart-3: #ef4444;
+  --chart-4: #eab308;
+  --chart-5: #64748b;
+
+  --radius: 0.75rem;
+
+  --sidebar: #f1f5f9;
+  --sidebar-foreground: #334155;
+  --sidebar-primary: #059669;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #dbeafe;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #cbd5e1;
+  --sidebar-ring: #10b981;
+}
+
+/*
+  Tema oscuro: navy profundo con verde esmeralda.
+*/
+.dark {
+  --background: #020617;
+  --foreground: #f1f5f9;
+
+  --card: #0f172a;
+  --card-foreground: #f1f5f9;
+
+  --popover: #0f172a;
+  --popover-foreground: #f1f5f9;
+
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+
+  --border: #1e293b;
+  --input: #050b18;
+  --ring: #10b981;
+
+  --chart-1: #10b981;
+  --chart-2: #38bdf8;
+  --chart-3: #ef4444;
+  --chart-4: #eab308;
+  --chart-5: #64748b;
+
+  --sidebar: #080c1d;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #0f4c3a;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #1e3a5f;
+  --sidebar-ring: #10b981;
+}
+
+/*
+  Tema del Punto de Venta (módulo POS).
+  Usa los mismos colores semánticos del sistema (primary, accent, destructive).
+  Oscuro por defecto; el toggle interno cambia data-pos-theme.
+*/
+:root,
+[data-pos-theme="dark"] {
+  --pos-bg: #020617;
+  --pos-card: #0f172a;
+  --pos-card-elevated: #1e293b;
+  --pos-border: #1e293b;
+  --pos-input: #050b18;
+  --pos-input-border: #1e293b;
+  --pos-soft: #1e293b;
+  --pos-tableheader: #065f46;
+  --pos-tableheader-hover: #059669;
+  --pos-table-row-hover: #1e293b;
+  --pos-blue: #059669;
+  --pos-blue-light: #34d399;
+  --pos-green: #059669;
+  --pos-green-light: #34d399;
+  --pos-teal: #10b981;
+  --pos-accent: #10b981;
+  --pos-badge: #065f46;
+  --pos-quick-chip: #1e293b;
+  --pos-quick-chip-hover: #334155;
+  --pos-quick-chip-border: #334155;
+  --pos-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+}
+
+[data-pos-theme="light"] {
+  --pos-bg: #f8fafc;
+  --pos-card: #ffffff;
+  --pos-card-elevated: #f1f5f9;
+  --pos-border: #e2e8f0;
+  --pos-input: #ffffff;
+  --pos-input-border: #e2e8f0;
+  --pos-soft: #f1f5f9;
+  --pos-tableheader: #065f46;
+  --pos-tableheader-hover: #059669;
+  --pos-table-row-hover: #f0fdfa;
+  --pos-blue: #059669;
+  --pos-blue-light: #34d399;
+  --pos-green: #059669;
+  --pos-green-light: #34d399;
+  --pos-teal: #10b981;
+  --pos-accent: #10b981;
+  --pos-badge: #065f46;
+  --pos-quick-chip: #f1f5f9;
+  --pos-quick-chip-hover: #e2e8f0;
+  --pos-quick-chip-border: #cbd5e1;
+  --pos-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ===== PLANTILLA INSTITUCIONAL / REPORTES ===== */
+.report-a4 {
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.report-page {
+  min-height: 297mm;
+  padding: 8mm;
+  box-sizing: border-box;
+}
+
+.report-marco {
+  border: 2px solid #065f46;
+  min-height: calc(297mm - 16mm);
+  display: flex;
+  flex-direction: column;
+}
+
+.report-header {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  border-bottom: 2px solid #065f46;
+}
+
+.report-logo {
+  width: 46px;
+  height: 46px;
+  background: #ffffff;
+  border: 1px solid #065f46;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.report-title {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.report-subtitle {
+  font-weight: 600;
+  font-size: 11px;
+  color: #ecfdf5;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-size: 11px;
+}
+
+.report-table-head th {
+  background: #065f46;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 9.5px;
+  letter-spacing: 0.03em;
+  padding: 5px 6px;
+  border: 1px solid #065f46;
+  text-align: center;
+}
+
+.report-table td {
+  border: 1px solid #cbd5e1;
+  padding: 4px 6px;
+  vertical-align: middle;
+}
+
+.row-producto td {
+  border-top: 2px solid #065f46;
+}
+
+.cell-especie {
+  font-weight: 600;
+  font-size: 11px;
+  padding-left: 8px !important;
+}
+
+.row-total td {
+  background: #d1fae5;
+  font-weight: 600;
+  border-top: 2px solid #059669;
+  color: #065f46;
+}
+
+.dark .row-total td {
+  background: rgba(5, 150, 105, 0.15);
+  border-top-color: #059669;
+  color: #6ee7b7;
+}
+
+.report-table-foot td {
+  background: #059669;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 6px;
+}
+
+.report-firma {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 4mm;
+}
+
+.firma-box {
+  text-align: center;
+  width: 90mm;
+}
+
+.firma-space {
+  height: 22px;
+  border-bottom: 1px solid #94a3b8;
+  margin: 0 auto 2px;
+  width: 70mm;
+}
+
+/* Scanner interno para la plantilla A4: la página no hace scroll */
+.plantilla-scroll {
+  max-height: calc(100svh - 652px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  .plantilla-scroll {
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .report-a4,
+  .report-a4 * {
+    visibility: visible !important;
+  }
+
+  .report-a4 {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+  }
+
+  .report-page {
+    min-height: auto;
+    padding: 0;
+  }
+
+  .kardex-pt-print,
+  .kardex-pt-print * {
+    visibility: visible !important;
+  }
+
+  .kardex-pt-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 12px;
+  }
+
+  .kardex-pt-no-print {
+    display: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  [data-report-print="true"] {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  [data-report-print="true"] * {
+    visibility: visible !important;
+  }
+}

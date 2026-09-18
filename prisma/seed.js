@@ -82,7 +82,9 @@ main()
   const { PrismaPg } = require("@prisma/adapter-pg");
   const { Pool } = require("pg");
   const bcrypt = require("bcryptjs");
-  
+
+  require("dotenv").config();
+
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
   });
@@ -405,13 +407,24 @@ main()
     console.log(`🏭 Establecimiento: ${establecimiento.nombre}`);
   }
   
-  main()
-    .catch((error) => {
+  // Ejecuta el seed y libera conexiones al terminar.
+  // Se exporta para poder invocarlo desde seed-if-empty.js en el build de Vercel.
+  async function run() {
+    try {
+      await main();
+    } catch (error) {
       console.error("❌ Error ejecutando seed:", error);
-      process.exit(1);
-    })
-    .finally(async () => {
+      throw error;
+    } finally {
       await prisma.$disconnect();
       await pool.end();
-    });
+    }
+  }
+
+  module.exports = run;
+
+  // Al ejecutarse directamente (node prisma/seed.js o prisma db seed), corre solo.
+  if (require.main === module) {
+    run().catch(() => process.exit(1));
+  }
   

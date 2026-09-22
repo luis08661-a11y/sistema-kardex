@@ -6,17 +6,20 @@ export interface PersonaReniec {
   digitoVerificador?: string;
 }
 
-const API_KEY = process.env.PERUAPI_KEY;
+const API_KEY = process.env.DECOLECTA_API_KEY;
 
 export async function consultarDniReniecService(numero: string): Promise<PersonaReniec | null> {
   if (!API_KEY) {
-    console.error("[RENIEC] PERUAPI_KEY no configurada");
+    console.error("[RENIEC] DECOLECTA_API_KEY no configurada");
     return null;
   }
   if (!/^\d{8}$/.test(numero)) return null;
   try {
-    const response = await fetch(`https://peruapi.com/api/dni/${numero}`, {
-      headers: { "X-API-KEY": API_KEY },
+    const response = await fetch(`https://api.decolecta.com/v1/reniec/dni?numero=${numero}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${API_KEY}`,
+      },
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) {
@@ -24,28 +27,18 @@ export async function consultarDniReniecService(numero: string): Promise<Persona
       return null;
     }
     const data = (await response.json()) as {
-      nombres?: string;
-      apellidoPaterno?: string;
-      apellidoMaterno?: string;
-      apellido_paterno?: string;
-      apellido_materno?: string;
-      dv?: string;
-      codVerifica?: string;
-      code?: number;
-      mensaje?: string;
+      first_name?: string;
+      first_last_name?: string;
+      second_last_name?: string;
+      document_number?: string;
     };
-    if (data.mensaje && data.mensaje !== "OK") {
-      console.error(`[RENIEC] Error API: ${data.mensaje}`);
-      return null;
-    }
-    const nombre = data.nombres;
+    const nombre = data.first_name;
     if (!nombre) return null;
     return {
       nombre,
-      apellidoPaterno: data.apellidoPaterno ?? data.apellido_paterno ?? "",
-      apellidoMaterno: data.apellidoMaterno ?? data.apellido_materno ?? "",
-      numeroDocumento: numero,
-      digitoVerificador: data.dv ?? data.codVerifica,
+      apellidoPaterno: data.first_last_name ?? "",
+      apellidoMaterno: data.second_last_name ?? "",
+      numeroDocumento: data.document_number ?? numero,
     };
   } catch (error) {
     console.error("[RENIEC] Error de conexión:", error);

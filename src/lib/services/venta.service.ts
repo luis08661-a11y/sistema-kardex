@@ -18,7 +18,7 @@ function num(v: Prisma.Decimal | number | null | undefined) {
 
 type VentaConDetalles = Prisma.VentaGetPayload<{
   include: {
-    empresa: { select: { id: true; ruc: true; razonSocial: true; firmaUrl: true } };
+    empresa: { select: { id: true; ruc: true; razonSocial: true; firmaUrl: true; logoUrl: true } };
     cliente: true;
     detalles: {
       include: {
@@ -48,7 +48,7 @@ export interface DetalleVentaDTO {
 
 export interface VentaDTO {
   id: string;
-  empresa: { id: string; ruc: string; razonSocial: string; firmaUrl: string | null };
+  empresa: { id: string; ruc: string; razonSocial: string; firmaUrl: string | null; logoUrl: string | null };
   tipoComprobante: string;
   serie: string;
   numero: number;
@@ -84,6 +84,7 @@ function mapearVenta(v: VentaConDetalles): VentaDTO {
       ruc: v.empresa.ruc,
       razonSocial: v.empresa.razonSocial,
       firmaUrl: v.empresa.firmaUrl,
+      logoUrl: v.empresa.logoUrl,
     },
     tipoComprobante: v.tipoComprobante,
     serie: v.serie,
@@ -248,7 +249,7 @@ export async function crearVentaService(input: VentaInput): Promise<VentaDTO> {
             },
           },
           include: {
-            empresa: { select: { id: true, ruc: true, razonSocial: true, firmaUrl: true } },
+            empresa: { select: { id: true, ruc: true, razonSocial: true, firmaUrl: true, logoUrl: true } },
             cliente: true,
             detalles: { include: { producto: { include: { unidadMedida: { select: { codigo: true, nombre: true } }, presentacion: { select: { nombre: true } } } } } },
           },
@@ -271,7 +272,7 @@ export async function obtenerVentaConDetallesService(id: string): Promise<VentaD
   const venta = await prisma.venta.findUnique({
     where: { id },
     include: {
-      empresa: { select: { id: true, ruc: true, razonSocial: true, firmaUrl: true } },
+      empresa: { select: { id: true, ruc: true, razonSocial: true, firmaUrl: true, logoUrl: true } },
       cliente: true,
       detalles: {
         include: {

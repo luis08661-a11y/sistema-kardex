@@ -165,6 +165,7 @@ export interface VentaPosGuardadaDTO {
     razonSocial: string;
     direccion: string | null;
     firmaUrl: string | null;
+    logoUrl: string | null;
   };
   cliente: ClienteSeleccionableDTO | null;
   detalles: DetalleVentaPosDTO[];
@@ -776,7 +777,7 @@ export async function guardarVentaPosService(input: PosVentaInput): Promise<Vent
         return tx.venta.findUniqueOrThrow({
           where: { id: venta.id },
           include: {
-            empresa: { select: { ruc: true, razonSocial: true, firmaUrl: true } },
+            empresa: { select: { ruc: true, razonSocial: true, firmaUrl: true, logoUrl: true } },
             cliente: true,
             detalles: {
               include: { producto: { select: { codigo: true, descripcion: true, unidadMedida: { select: { codigo: true, nombre: true } } } } },
@@ -825,6 +826,7 @@ export async function guardarVentaPosService(input: PosVentaInput): Promise<Vent
       razonSocial: resultados.empresa.razonSocial,
       direccion: establecimiento?.direccion ?? null,
       firmaUrl: resultados.empresa.firmaUrl,
+      logoUrl: resultados.empresa.logoUrl,
     },
     cliente: resultados.cliente
       ? {

@@ -359,6 +359,7 @@ export function ResumenPlanillaModule({
     );
   }
 
+
   async function crearPdf(): Promise<jsPDF> {
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageW = doc.internal.pageSize.getWidth();

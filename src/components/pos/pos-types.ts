@@ -86,6 +86,7 @@ export function ventaPosParaImprimir(
       ruc: venta.empresa.ruc,
       razonSocial: venta.empresa.razonSocial,
       firmaUrl: venta.empresa.firmaUrl,
+      logoUrl: venta.empresa.logoUrl,
     },
     cliente: venta.cliente
       ? {

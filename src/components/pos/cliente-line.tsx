@@ -85,10 +85,10 @@ export function ClienteLine({
             cliente.razonSocial,
           direccion: res.persona.direccion ?? cliente.direccion,
         });
-        toast.success("Datos obtenidos de la entidad.");
+        toast.success("Datos obtenidos correctamente.");
       } else {
         toast.warning(
-          "No se encontraron datos en la entidad. Complete los datos manualmente y presione el botón de guardar.",
+          "No se encontraron datos. Complete los datos manualmente y presione el botón de guardar.",
           { duration: 6000 },
         );
       }

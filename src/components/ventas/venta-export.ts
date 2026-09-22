@@ -106,6 +106,7 @@ export function enviarVentaCorreo(
 type ImagenCargada = { data: string; w: number; h: number };
 const logosCertificacionCache = new Map<string, Promise<ImagenCargada>>();
 const firmaCache = new Map<string, Promise<ImagenCargada>>();
+const logoEmpresaCache = new Map<string, Promise<ImagenCargada>>();
 
 async function cargarImagenDataUrl(
   ruta: string,
@@ -189,6 +190,10 @@ async function cargarLogoCertificacion(ruta: string): Promise<ImagenCargada> {
 
 async function cargarFirmaUrl(ruta: string): Promise<ImagenCargada> {
   return cargarImagenDataUrl(ruta, firmaCache);
+}
+
+async function cargarLogoEmpresa(ruta: string): Promise<ImagenCargada> {
+  return cargarImagenDataUrl(ruta, logoEmpresaCache);
 }
 
 export async function crearDocumentoVenta(
@@ -363,9 +368,23 @@ export async function crearDocumentoVenta(
   doc.rect(0, 0, pageW, pageH, "F");
 
   // ---------- Encabezado izquierdo: Logo + empresa ----------
-  drawLeafLogo(margin + 5, 13, 5.2);
+  const logoUrl = venta.empresa?.logoUrl;
+  if (logoUrl) {
+    try {
+      const logo = await cargarLogoEmpresa(logoUrl);
+      const escala = Math.min(500 / logo.w, 18 / logo.h);
+      const logoW = logo.w * escala;
+      const logoH = logo.h * escala;
+      const logoY = 16.5 - logoH / 2;
+      doc.addImage(logo.data, "PNG", 10, logoY, logoW, logoH);
+    } catch {
+      drawLeafLogo(margin + 5, 16.5, 5.2);
+    }
+  } else {
+    drawLeafLogo(margin + 5, 16.5, 5.2);
+  }
 
-  doc.setTextColor(...verdeMarca);
+/*   doc.setTextColor(...verdeMarca);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.text(
@@ -377,7 +396,7 @@ export async function crearDocumentoVenta(
   doc.setFont("helvetica", "italic");
   doc.setFontSize(7);
   doc.setTextColor(70, 70, 70);
-  doc.text('"La Agricultura del Futuro, HOY"', margin + 13, 20);
+  doc.text('"La Agricultura del Futuro, HOY"', margin + 13, 20); */
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.3);
@@ -704,7 +723,7 @@ export async function crearDocumentoVenta(
         [4, 1.5],
       ],
       margin + 4,
-      pageH - 21,
+      infoY + 64,
       [1, 1],
       "S",
     );
@@ -716,7 +735,7 @@ export async function crearDocumentoVenta(
   } else {
     try {
       const firma = await cargarFirmaUrl(firmaUrl);
-      const escala = Math.min(100 / firma.w, 40 / firma.h);
+      const escala = Math.min(100 / firma.w, 25 / firma.h);
       const fw = firma.w * escala;
       const fh = firma.h * escala;
 
@@ -740,7 +759,8 @@ export async function crearDocumentoVenta(
         data = lienzo.toDataURL("image/png");
       }
       const firmaX = pageW / 2 - fw / 2;
-      doc.addImage(data, "PNG", firmaX, pageH - 12 - fh, fw, fh);
+      const firmaY = infoY + 50;
+      doc.addImage(data, "PNG", firmaX, firmaY, fw, fh);
     } catch (error) {
       console.error("No se pudo dibujar la firma:", error);
       dibujarFirmaSimulada();
@@ -751,7 +771,7 @@ export async function crearDocumentoVenta(
   doc.setFontSize(7.6);
   doc.setTextColor(...grisTexto);
   const footerText = "CONTABILIDAD - BIOALTERNATIVA E&F S.A.C.";
-  doc.text(footerText, pageW / 2, pageH - 15, { align: "center" });
+  doc.text(footerText, pageW / 2, infoY + 80, { align: "center" });
 
   // ---------- QR ----------
   /*  const qrSize = 26;

@@ -55,6 +55,7 @@ export interface VentaParaImprimir {
     ruc: string;
     razonSocial: string;
     firmaUrl?: string | null;
+    logoUrl?: string | null;
     direccion?: string;
     contactos?: string;
     web?: string;

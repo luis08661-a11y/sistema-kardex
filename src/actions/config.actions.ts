@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { mkdir, unlink, writeFile } from "fs/promises";
-import path from "path";
 import {
   empresaSchema,
   periodoSchema,
@@ -21,6 +19,10 @@ import {
   obtenerConfiguracionService,
 } from "@/lib/services/config.service";
 import { prisma } from "@/lib/db/prisma";
+import {
+  guardarImagenEmpresa,
+  quitarUploadEmpresa,
+} from "@/lib/storage.service";
 
 export type ConfigState = { success: boolean; message: string };
 
@@ -103,37 +105,6 @@ export async function cambiarEstadoEstablecimiento(formData: FormData): Promise<
   catch (error) { return { success: false, message: errorMessage(error, "No se pudo actualizar el estado") }; }
 }
 
-const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads", "empresa");
-
-const IMAGE_TYPES: Record<string, string> = {
-  "image/png": ".png",
-  "image/jpeg": ".jpg",
-  "image/jpg": ".jpg",
-  "image/webp": ".webp",
-  "image/gif": ".gif",
-};
-
-async function guardarImagenEmpresa(archivo: File, empresaId: string, campo: "logo" | "firma"): Promise<string> {
-  if (!IMAGE_TYPES[archivo.type]) {
-    throw new Error("El archivo debe ser una imagen (PNG, JPG, WEBP o GIF)");
-  }
-  if (archivo.size > 5 * 1024 * 1024) {
-    throw new Error("La imagen no debe superar 5 MB");
-  }
-  await mkdir(UPLOADS_DIR, { recursive: true });
-  const nombre = `${empresaId}-${campo}${IMAGE_TYPES[archivo.type]}`;
-  const destino = path.join(UPLOADS_DIR, nombre);
-  await writeFile(destino, Buffer.from(await archivo.arrayBuffer()));
-  return `/uploads/empresa/${nombre}`;
-}
-
-const quitarUploadEmpresa = (url: string | null | undefined) => {
-  if (!url || !url.startsWith("/uploads/empresa/")) return;
-  const rel = path.basename(url);
-  const abs = path.join(UPLOADS_DIR, rel);
-  unlink(abs).catch(() => {});
-};
-
 function parseEmpresaArchivo(formData: FormData): { logo: File | null; firma: File | null } {
   const l = formData.get("logo"); const f = formData.get("firma");
   return { logo: l instanceof File && l.size > 0 ? l : null, firma: f instanceof File && f.size > 0 ? f : null };
@@ -150,8 +121,8 @@ export async function guardarEmpresaReporte(formData: FormData): Promise<ConfigS
     if (!empresa) return { success: false, message: "La empresa no existe" };
     let logoUrl = empresa.logoUrl;
     let firmaUrl = empresa.firmaUrl;
-    if (logo) { quitarUploadEmpresa(empresa.logoUrl); logoUrl = await guardarImagenEmpresa(logo, empresaId, "logo"); }
-    if (firma) { quitarUploadEmpresa(empresa.firmaUrl); firmaUrl = await guardarImagenEmpresa(firma, empresaId, "firma"); }
+    if (logo) { await quitarUploadEmpresa(empresa.logoUrl); logoUrl = await guardarImagenEmpresa(logo, empresaId, "logo"); }
+    if (firma) { await quitarUploadEmpresa(empresa.firmaUrl); firmaUrl = await guardarImagenEmpresa(firma, empresaId, "firma"); }
     await prisma.empresa.update({ where: { id: empresaId }, data: { logoUrl, firmaUrl, responsableReporte: responsableReporte || null, cargoReporte: cargoReporte || null } });
     revalidatePath("/dashboard/config");
     return { success: true, message: "Configuración de reportes guardada" };

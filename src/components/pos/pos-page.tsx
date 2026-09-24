@@ -41,6 +41,7 @@ import {
   buscarProductosPos,
   guardarVentaPos,
   obtenerCatalogoPos,
+  obtenerConteoVentasDelDia,
   obtenerTipoCambioPos,
 } from "@/actions/pos.actions";
 import { obtenerVenta } from "@/actions/venta.actions";
@@ -194,6 +195,7 @@ export function PosPage({ datos }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [rapidos, setRapidos] = useState<ProductoPosDTO[]>([]);
   const [guardando, setGuardando] = useState(false);
+  const [ventasDelDia, setVentasDelDia] = useState(0);
 
   const [aviso, setAviso] = useState<{
     titulo: string;
@@ -229,8 +231,18 @@ export function PosPage({ datos }: Props) {
     }
   };
 
+  const cargarVentasDelDia = async () => {
+    try {
+      const total = await obtenerConteoVentasDelDia();
+      setVentasDelDia(total);
+    } catch {
+      // mantener el último valor conocido
+    }
+  };
+
   useEffect(() => {
     void cargarRapidos();
+    void cargarVentasDelDia();
   }, []);
 
   const totales = useMemo(
@@ -245,10 +257,6 @@ export function PosPage({ datos }: Props) {
       setRecibidoText(String(totales.total));
     }
   }, [totales.total, metodoPago]);
-  const totalItems = useMemo(
-    () => cart.reduce((acc, l) => acc + l.cantidad, 0),
-    [cart],
-  );
   const recibido =
     Number.isFinite(Number(recibidoText)) && Number(recibidoText) > 0
       ? Number(recibidoText)
@@ -468,6 +476,7 @@ export function PosPage({ datos }: Props) {
       limpiarVenta();
       limpiarCliente();
       void cargarRapidos();
+      void cargarVentasDelDia();
       if (imprimir) {
         setTicket(venta);
         setOpenTicket(true);
@@ -618,7 +627,7 @@ export function PosPage({ datos }: Props) {
             <History className="size-4 text-pos-blue-light" />
             Ventas del Día
             <span className="rounded-md bg-pos-blue px-1.5 py-0.5 font-mono text-[10px] font-black text-white tabular-nums">
-              {totalItems}
+              {ventasDelDia}
             </span>
           </button>
         </div>
@@ -1104,7 +1113,10 @@ export function PosPage({ datos }: Props) {
           setOpenImprimirHistorial(true);
         }}
         onRecargar={fila => void recargarVentaEnPos(fila)}
-        onCambio={() => void cargarRapidos()}
+        onCambio={() => {
+          void cargarRapidos();
+          void cargarVentasDelDia();
+        }}
       />
       <TicketPreviewDialog
         venta={ticket}

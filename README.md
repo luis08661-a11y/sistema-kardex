@@ -41,3 +41,4 @@ Para iniciar prisma
 - pnpm prisma migrate dev --name init
 - pnpm prisma generate
 - pnpm prisma db seed
+

@@ -537,6 +537,19 @@ export async function guardarClientePosService(
   };
 }
 
+export async function obtenerConteoVentasDelDiaService(): Promise<number> {
+  const empresa = await obtenerEmpresaActivaService();
+  const desde = new Date();
+  desde.setHours(0, 0, 0, 0);
+  return prisma.venta.count({
+    where: {
+      empresaId: empresa.id,
+      estado: "EMITIDA",
+      fecha: { gte: desde },
+    },
+  });
+}
+
 export async function obtenerHistorialVentasPosService(): Promise<HistorialVentasPosDTO> {
   const empresa = await obtenerEmpresaActivaService();
   const desde = new Date();

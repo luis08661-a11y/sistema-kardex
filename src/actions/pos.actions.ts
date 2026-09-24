@@ -64,6 +64,10 @@ export async function obtenerHistorialVentasPos(): Promise<HistorialVentasPosDTO
   return service.obtenerHistorialVentasPosService();
 }
 
+export async function obtenerConteoVentasDelDia(): Promise<number> {
+  return service.obtenerConteoVentasDelDiaService();
+}
+
 export async function buscarClientesDirectorio(input: unknown): Promise<ClienteSeleccionableDTO[]> {
   const parsed = posDirectorioFiltrosSchema.safeParse(input);
   const q = parsed.success ? parsed.data.q ?? "" : "";

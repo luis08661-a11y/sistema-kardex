@@ -452,7 +452,7 @@ export function ProductoTerminadoModule({ data }: { data: any }) {
                 </div>
               </div>
               <Button
-                onClick={openModal}
+                onClick={() => openModal()}
                 className="w-fit gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-900/20 font-semibold">
                 <Plus className="h-4 w-4" />
                 Registrar Movimiento

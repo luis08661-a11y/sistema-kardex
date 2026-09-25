@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Printer, Loader2 } from "lucide-react";
+import { Printer, Loader2, FileDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import {
   type FormaPago,
   type MetodoPago,
 } from "@/components/ventas/types";
+import { exportarPdfVentaA5 } from "@/components/ventas/venta-export";
 
 interface Props {
   venta: VentaParaImprimir | null;
@@ -32,8 +34,20 @@ interface Props {
 }
 
 export function VentaPrint({ venta, open, onOpenChange, cargando }: Props) {
+  const [descargando, setDescargando] = useState(false);
+
   const imprimir = () => {
     window.print();
+  };
+
+  const descargarA5 = async () => {
+    if (!venta || descargando) return;
+    setDescargando(true);
+    try {
+      await exportarPdfVentaA5(venta);
+    } finally {
+      setDescargando(false);
+    }
   };
 
   return (
@@ -45,42 +59,56 @@ export function VentaPrint({ venta, open, onOpenChange, cargando }: Props) {
       }
       @page { margin: 8mm; }`}</style>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-h-[65vh] overflow-y-auto max-w-lg!">
-        {!cargando && venta && (
-          <>
-            <DialogHeader className="print:hidden">
-              <DialogTitle>Vista previa del comprobante</DialogTitle>
-            </DialogHeader>
-            <div className="mx-auto w-full max-w-md bg-white p-6 text-slate-900 *:[&_*]:text-slate-900">
-              <Documento venta={venta} />
-            </div>
-            <div className="print:hidden">
-              <div className="flex items-center justify-end gap-2 border-t pt-4">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
-                  Cerrar
-                </Button>
-                <Button onClick={imprimir} className="gap-2">
-                  <Printer className="size-4" />
-                  Imprimir
-                </Button>
+        <DialogContent className="max-w-lg! flex max-h-[65vh] flex-col overflow-hidden">
+          {!cargando && venta && (
+            <>
+              <DialogHeader className="shrink-0 print:hidden">
+                <DialogTitle>Vista previa del comprobante (A5)</DialogTitle>
+              </DialogHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto bg-slate-100">
+                <div className="mx-auto w-full max-w-md bg-white p-6 text-slate-900 *:[&_*]:text-slate-900">
+                  <Documento venta={venta} />
+                </div>
               </div>
+              <div className="shrink-0 print:hidden">
+                <div className="flex items-center justify-end gap-2 border-t bg-transparent px-0 pt-2 pb-0">
+                  <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    Cerrar
+                  </Button>
+                  <Button
+                    disabled={descargando}
+                    onClick={() => void descargarA5()}
+                    className="gap-1.5 bg-rose-500 text-white hover:bg-rose-600">
+                    {descargando ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <FileDown className="size-4" />
+                    )}
+                    Descargar PDF A5
+                  </Button>
+                  <Button onClick={imprimir} className="gap-2">
+                    <Printer className="size-4" />
+                    Imprimir
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+          {cargando && (
+            <div className="flex h-40 items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Cargando comprobante...
             </div>
-          </>
-        )}
-        {cargando && (
-          <div className="flex h-40 items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Cargando comprobante...
-          </div>
-        )}
-      </DialogContent>
+          )}
+        </DialogContent>
       </Dialog>
       {venta &&
+        typeof document !== "undefined" &&
         createPortal(
           <div id="print-area" className="hidden bg-white text-slate-900">
             <Documento venta={venta} />
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
@@ -90,7 +118,7 @@ function Documento({ venta }: { venta: VentaParaImprimir }) {
   const tipo = venta.tipoComprobante as TipoComprobante;
 
   return (
-    <div className="relative space-y-4 text-sm">
+    <div data-venta-documento className="relative space-y-4 text-sm">
       <div className="border-b border-slate-300 pb-3 text-center">
         <div className="text-lg font-bold">
           {venta.empresa?.razonSocial || "Empresa"}
@@ -110,11 +138,15 @@ function Documento({ venta }: { venta: VentaParaImprimir }) {
         </div>
         <div>
           <div className="text-slate-500">Número</div>
-          <div className="font-semibold">{String(venta.numero).padStart(6, "0")}</div>
+          <div className="font-semibold">
+            {String(venta.numero).padStart(6, "0")}
+          </div>
         </div>
         <div>
           <div className="text-slate-500">Fecha</div>
-          <div className="font-semibold">{formatearFechaLocal(venta.fecha)}</div>
+          <div className="font-semibold">
+            {formatearFechaLocal(venta.fecha)}
+          </div>
         </div>
       </div>
 
@@ -126,8 +158,12 @@ function Documento({ venta }: { venta: VentaParaImprimir }) {
           <div className="space-y-0.5">
             <div className="font-semibold">{venta.cliente.razonSocial}</div>
             <div className="font-mono text-xs">
-              {TIPO_DOCUMENTO_LABEL[venta.cliente.tipoDocumento as TipoDocumento]} ·{" "}
-              {venta.cliente.numeroDocumento}
+              {
+                TIPO_DOCUMENTO_LABEL[
+                  venta.cliente.tipoDocumento as TipoDocumento
+                ]
+              }{" "}
+              · {venta.cliente.numeroDocumento}
             </div>
             {venta.cliente.direccion && (
               <div className="text-xs">{venta.cliente.direccion}</div>
@@ -149,15 +185,22 @@ function Documento({ venta }: { venta: VentaParaImprimir }) {
             </tr>
           </thead>
           <tbody>
-            {venta.detalles.map((d, i) => (
-              <tr key={d.id ?? i} className="border-b border-slate-200">
+            {venta.detalles.map(d => (
+              <tr
+                key={
+                  d.id ??
+                  `${d.codigo}-${d.descripcion}-${d.precioUnitario}-${d.cantidad}`
+                }
+                className="border-b border-slate-200">
                 <td className="py-1 pr-2">
                   <div className="font-medium">{d.descripcion}</div>
                   <div className="font-mono text-[10px] text-slate-500">
                     {d.codigo}
                   </div>
                 </td>
-                <td className="py-1 pr-2 text-right tabular-nums">{d.cantidad}</td>
+                <td className="py-1 pr-2 text-right tabular-nums">
+                  {d.cantidad}
+                </td>
                 <td className="py-1 pr-2 text-right tabular-nums">
                   {formatearMoneda(d.precioUnitario)}
                 </td>
@@ -173,7 +216,9 @@ function Documento({ venta }: { venta: VentaParaImprimir }) {
       <div className="ml-auto w-56 space-y-1 text-sm">
         <div className="flex justify-between">
           <span className="text-slate-500">Subtotal</span>
-          <span className="tabular-nums">{formatearMoneda(venta.subtotal)}</span>
+          <span className="tabular-nums">
+            {formatearMoneda(venta.subtotal)}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-slate-500">IGV (18%)</span>

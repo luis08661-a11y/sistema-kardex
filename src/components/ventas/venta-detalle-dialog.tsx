@@ -109,12 +109,16 @@ export function VentaDetalleDialog({ venta, open, onOpenChange, cargando }: Prop
     ? Math.max(1, Math.ceil(venta.detalles.length / POR_PAGINA))
     : 1;
   const paginaSegura = Math.min(pagina, totalPaginas - 1);
-  const detallesVisibles = venta
-    ? venta.detalles.slice(
-        paginaSegura * POR_PAGINA,
-        (paginaSegura + 1) * POR_PAGINA,
-      )
-    : [];
+  const detallesVisibles = useMemo(
+    () =>
+      venta
+        ? venta.detalles.slice(
+            paginaSegura * POR_PAGINA,
+            (paginaSegura + 1) * POR_PAGINA,
+          )
+        : [],
+    [venta, paginaSegura],
+  );
 
   const columns = useMemo(
     () =>

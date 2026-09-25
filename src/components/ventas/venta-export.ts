@@ -122,6 +122,9 @@ async function cargarImagenDataUrl(
       // Server: read from public/ filesystem or fetch absolute URLs
       if (ruta.startsWith("http://") || ruta.startsWith("https://")) {
         const res = await fetch(ruta);
+        if (!res.ok) {
+          throw new Error(`No se pudo cargar la imagen ${ruta} (${res.status})`);
+        }
         const blob = await res.blob();
         const buf = Buffer.from(await blob.arrayBuffer());
         const ext = ruta.split(".").pop()?.toLowerCase() ?? "png";
@@ -810,3 +813,70 @@ export async function exportarPdfVenta(
 
   doc.save(`${nombrePdfVenta(venta)}.pdf`);
 }
+
+
+
+export async function exportarPdfVentaA5(
+  venta: VentaParaImprimir,
+  opciones?: { preview?: boolean },
+): Promise<string | undefined> {
+  const { preview = false } = opciones ?? {};
+  const [jsPdfMod, htmlToImageMod] = await Promise.all([
+    import("jspdf"),
+    import("html-to-image"),
+  ]);
+  const { toCanvas } = htmlToImageMod;
+  const doc = new jsPdfMod.default({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a5",
+    compress: true,
+  });
+
+  const nodos = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-venta-documento]"),
+  );
+  const nodo =
+    nodos.find((n) => n.offsetParent !== null) ??
+    nodos.find((n) => n.getClientRects().length > 0) ??
+    nodos[0];
+  if (!nodo) {
+    if (preview) return "";
+    throw new Error("No se encontró el documento de venta para exportar.");
+  }
+
+  const canvas = await toCanvas(nodo, {
+    pixelRatio: 2,
+    backgroundColor: "#ffffff",
+    cacheBust: true,
+  });
+
+  const MARGEN = 4;
+  const contenidoW = 140;
+  const contenidoH = 202;
+  const pxPorMm = canvas.width / contenidoW;
+  const altoTotalMm = canvas.height / pxPorMm;
+  const paginas = Math.max(1, Math.ceil(altoTotalMm / contenidoH));
+
+  for (let i = 0; i < paginas; i++) {
+    if (i > 0) doc.addPage("a5", "portrait");
+    doc.addImage(
+      canvas,
+      "PNG",
+      MARGEN,
+      MARGEN - i * contenidoH,
+      contenidoW,
+      altoTotalMm,
+    );
+  }
+
+  const nombre = nombrePdfVenta(venta);
+
+  if (preview) {
+    const url = doc.output("bloburl");
+    return String(url);
+  }
+
+  doc.save(`${nombre}.pdf`);
+}
+

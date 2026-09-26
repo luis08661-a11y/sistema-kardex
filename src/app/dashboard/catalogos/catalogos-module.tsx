@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   columnVisibilityFeature,
   createColumnHelper,
+  createPaginatedRowModel,
   FlexRender,
   rowPaginationFeature,
   tableFeatures,
@@ -25,10 +26,6 @@ import {
   Power,
   Trash2,
   Loader2,
-  ChevronsLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronsRightIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,13 +33,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -67,6 +57,8 @@ import {
   obtenerCatalogos,
 } from "@/actions/catalogos.actions";
 import { CatalogoDialog } from "@/components/catalogos/catalogo-dialog";
+import { PaginacionTabla } from "@/components/shared/paginacion-tabla";
+import { ModuloCabecera } from "@/components/shared/modulo-cabecera";
 
 type CatalogoRow = {
   id: string;
@@ -84,14 +76,18 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "unidades", label: "Unidades", icon: Ruler },
   { id: "presentaciones", label: "Presentaciones", icon: Package },
   { id: "existencias", label: "Tipo existencia", icon: Database },
-  { id: "categorias", label: "Categorías", icon: Tags },
-  { id: "marcas", label: "Marcas", icon: Factory },
-  { id: "afectaciones", label: "Tipo afectación", icon: FileText },
+ /*  { id: "categorias", label: "Categorías", icon: Tags },
+  { id: "marcas", label: "Marcas", icon: Factory }, 
+  { id: "afectaciones", label: "Tipo afectación", icon: FileText },*/
   { id: "operaciones", label: "Tipo operación", icon: SlidersHorizontal },
   { id: "almacenamientos", label: "Almacenamientos", icon: Warehouse },
 ];
 
-const features = tableFeatures({ rowPaginationFeature, columnVisibilityFeature });
+const features = tableFeatures({
+  rowPaginationFeature,
+  columnVisibilityFeature,
+  paginatedRowModel: createPaginatedRowModel(),
+});
 const columnHelper = createColumnHelper<typeof features, CatalogoRow>();
 
 export function CatalogosModule({ resultadoInicial }: { resultadoInicial: CatalogosData }) {
@@ -114,6 +110,7 @@ export function CatalogosModule({ resultadoInicial }: { resultadoInicial: Catalo
     try {
       const res = await obtenerCatalogos();
       setResultado(res);
+      setPageIndex(0);
     } finally {
       setCargando(false);
     }
@@ -299,29 +296,21 @@ export function CatalogosModule({ resultadoInicial }: { resultadoInicial: Catalo
   return (
     <div className="w-full space-y-6 p-4 sm:p-6">
       {/* ── HERO ── */}
-      <div className="relative overflow-hidden rounded-xl border border-slate-700/60 bg-[#0f172a] p-4 text-white shadow-lg shadow-emerald-500/10">
-        <div className="absolute -right-8 -top-2 h-32 w-32 rounded-full bg-emerald-500/5 blur-2xl" />
-        <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-emerald-500/5 blur-xl" />
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 shadow-sm shadow-emerald-500/30">
-              <TabIcon className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold tracking-tight">
-                {currentTab?.label.toUpperCase()}
-              </h1>
-              <p className="text-[14px] text-slate-400">
-                Catálogos maestros del sistema
-              </p>
-            </div>
-          </div>
-          <Button size="sm" className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-500" onClick={abrirNuevo}>
+      <ModuloCabecera
+        icon={TabIcon}
+        titulo={currentTab?.label.toUpperCase() ?? "CATÁLOGOS"}
+        descripcion="Catálogos maestros del sistema"
+        acciones={
+          <Button
+            size="sm"
+            className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-500"
+            onClick={abrirNuevo}
+          >
             <Plus className="size-4" />
             Nuevo
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* ── TABS ── */}
       <div className="space-y-4">
@@ -415,7 +404,7 @@ export function CatalogosModule({ resultadoInicial }: { resultadoInicial: Catalo
                     table.getRowModel().rows.map((row) => (
                       <TableRow key={row.id} className="h-9">
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} className="py-1.5">
+                          <TableCell key={cell.id} className="h-9 py-0">
                             <FlexRender cell={cell} />
                           </TableCell>
                         ))}
@@ -438,50 +427,22 @@ export function CatalogosModule({ resultadoInicial }: { resultadoInicial: Catalo
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="tabular-nums">
-                Página {pageIndex + 1} de {totalPaginas}
-              </span>
-              <span className="tabular-nums">
-                {filteredData.length > 0
-                  ? `${(pageIndex * pageSize + 1).toLocaleString("es-PE")}–${Math.min((pageIndex + 1) * pageSize, filteredData.length).toLocaleString("es-PE")} de ${filteredData.length.toLocaleString("es-PE")}`
-                  : "0 resultados"}
-              </span>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(v) => {
-                  setPageSize(Number(v));
-                  setPageIndex(0);
-                }}
-              >
-                <SelectTrigger size="sm" className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[5, 10, 20, 50].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {n}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-1.5">
-              <Button variant="outline" size="icon-sm" disabled={pageIndex === 0 || cargando} onClick={() => setPageIndex(0)}>
-                <ChevronsLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex === 0 || cargando} onClick={() => setPageIndex((p) => Math.max(0, p - 1))}>
-                <ChevronLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex + 1 >= totalPaginas || cargando} onClick={() => setPageIndex((p) => p + 1)}>
-                <ChevronRightIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex + 1 >= totalPaginas || cargando} onClick={() => setPageIndex(totalPaginas - 1)}>
-                <ChevronsRightIcon className="size-4" />
-              </Button>
-            </div>
-          </div>
+          <PaginacionTabla
+            pageIndex={pageIndex}
+            totalPaginas={totalPaginas}
+            pageSize={pageSize}
+            total={filteredData.length}
+            onPageSizeChange={n => {
+              setPageSize(n);
+              setPageIndex(0);
+            }}
+            onPrevious={() => setPageIndex(p => Math.max(0, p - 1))}
+            onNext={() => setPageIndex(p => p + 1)}
+            pageSizes={[5, 10, 20, 50]}
+            singular="catálogo"
+            plural="catálogos"
+            cargando={cargando}
+          />
         </CardContent>
       </Card>
 

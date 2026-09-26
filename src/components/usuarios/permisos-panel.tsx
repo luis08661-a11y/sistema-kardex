@@ -116,7 +116,7 @@ export function PermisosPanel({ rol, permisos, onCerrar, onGuardado }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="size-8" onClick={onCerrar}>
+          <Button variant="ghost" size="icon" aria-label="Cerrar" className="size-8" onClick={onCerrar}>
             <X className="size-4" />
           </Button>
         </div>
@@ -166,15 +166,13 @@ export function PermisosPanel({ rol, permisos, onCerrar, onGuardado }: Props) {
                     {count}/{permisosModulo.length}
                   </Badge>
                 </button>
-                <div
-                  role="button"
-                  tabIndex={0}
+                <button
+                  type="button"
                   onClick={(e) => { e.stopPropagation(); toggleTodosModulo(modulo); }}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); toggleTodosModulo(modulo); } }}
                   className="cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted"
                 >
                   {todosSeleccionados ? "Quitar todos" : "Seleccionar todos"}
-                </div>
+                </button>
               </div>
 
               {/* Permisos del módulo */}

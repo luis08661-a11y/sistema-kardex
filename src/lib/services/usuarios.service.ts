@@ -132,7 +132,7 @@ export async function registrarAuditoriaService(input: {
       entidadId: input.entidadId ?? null,
       ruta: input.ruta ?? null,
       metodo: input.metodo ?? null,
-      detalle: input.detalle == null ? undefined : JSON.parse(JSON.stringify(input.detalle)),
+      detalle: input.detalle == null ? undefined : structuredClone(input.detalle),
       ip: input.ip ?? null,
       userAgent: input.userAgent ?? null,
     },

@@ -131,6 +131,11 @@ const data = {
           url: "/dashboard/venta-pos",
           icon: <ReceiptTextIcon />,
         },
+        /* {
+          title: "pos",
+          url: "/dashboard/ventas",
+          icon: <ReceiptTextIcon />,
+        }, */
         {
           title: "Reporte de Ventas",
           url: "/dashboard/reporte-ventas",

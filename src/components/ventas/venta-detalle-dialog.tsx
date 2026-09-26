@@ -12,8 +12,6 @@ import {
   Receipt,
   Package,
   CalendarDays,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import {
   columnVisibilityFeature,
@@ -49,6 +47,7 @@ import { EnviarCorreoDialog } from "@/components/ventas/enviar-correo-dialog";
 import { EnviarWhatsAppDialog } from "@/components/ventas/enviar-whatsapp-dialog";
 import { listarEnviosComprobanteAction } from "@/actions/venta-envio.actions";
 import type { EnvioComprobanteDTO } from "@/lib/services/envio-comprobante.service";
+import { PaginacionModal } from "@/components/shared/paginacion-modal";
 
 interface Props {
   venta: VentaParaImprimir | null;
@@ -394,45 +393,15 @@ export function VentaDetalleDialog({ venta, open, onOpenChange, cargando }: Prop
                       </tbody>
                     </table>
                   </div>
-                  {venta.detalles.length > POR_PAGINA && (
-                    <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950/60 px-4 py-2">
-                      <span className="text-[11px] font-medium text-slate-400 tabular-nums">
-                        {paginaSegura * POR_PAGINA + 1}–
-                        {Math.min(
-                          (paginaSegura + 1) * POR_PAGINA,
-                          venta.detalles.length,
-                        )}{" "}
-                        de {venta.detalles.length} productos
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={paginaSegura === 0}
-                          onClick={() => setPagina(p => Math.max(0, p - 1))}
-                          aria-label="Página anterior"
-                          className="text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40"
-                        >
-                          <ChevronLeft className="size-3.5" />
-                        </Button>
-                        <span className="px-1 text-[11px] font-semibold tabular-nums text-slate-300">
-                          {paginaSegura + 1} / {totalPaginas}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          disabled={paginaSegura + 1 === totalPaginas}
-                          onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
-                          aria-label="Página siguiente"
-                          className="text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40"
-                        >
-                          <ChevronRight className="size-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <PaginacionModal
+                    pagina={paginaSegura}
+                    totalPaginas={totalPaginas}
+                    porPagina={POR_PAGINA}
+                    total={venta.detalles.length}
+                    onCambioPagina={setPagina}
+                    tema="oscuro"
+                    contenedor="flex items-center justify-between border-t border-slate-800 bg-slate-950/60 px-4 py-2"
+                  />
                 </div>
 
                 {/* Totales */}

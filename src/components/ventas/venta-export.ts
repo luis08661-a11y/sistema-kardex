@@ -145,6 +145,9 @@ async function cargarImagenDataUrl(
     } else {
       // Client: fetch relative path
       const res = await fetch(ruta);
+      if (!res.ok) {
+        throw new Error(`No se pudo cargar la imagen ${ruta} (${res.status})`);
+      }
       const blob = await res.blob();
       dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();

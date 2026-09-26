@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Boxes, Check, ChevronLeft, ChevronRight, Loader2, Plus, Search } from "lucide-react";
+import { Boxes, Check, Loader2, Plus, Search } from "lucide-react";
 
 import { obtenerProductosCatalogo } from "@/actions/venta.actions";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ProductoResultado } from "@/components/ventas/types";
+import { PaginacionModal } from "@/components/shared/paginacion-modal";
 
 interface Props {
   open: boolean;
@@ -188,43 +189,14 @@ export function CatalogoProductosModal({ open, onOpenChange, onAgregar, agregado
                 );
               })}
             </ul>
-            {filtrados.length > POR_PAGINA && (
-              <div className="mt-3 flex items-center justify-between border-t pt-2">
-                <span className="text-[11px] text-muted-foreground tabular-nums">
-                  {paginaSegura * POR_PAGINA + 1}–
-                  {Math.min(
-                    (paginaSegura + 1) * POR_PAGINA,
-                    filtrados.length,
-                  )}{" "}
-                  de {filtrados.length} productos
-                </span>
-                <div className="flex items-center gap-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-xs"
-                    disabled={paginaSegura === 0}
-                    onClick={() => setPagina(p => Math.max(0, p - 1))}
-                    aria-label="Página anterior"
-                  >
-                    <ChevronLeft />
-                  </Button>
-                  <span className="px-1 text-[11px] font-semibold tabular-nums text-muted-foreground">
-                    {paginaSegura + 1} / {totalPaginas}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-xs"
-                    disabled={paginaSegura + 1 === totalPaginas}
-                    onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
-                    aria-label="Página siguiente"
-                  >
-                    <ChevronRight />
-                  </Button>
-                </div>
-              </div>
-            )}
+            <PaginacionModal
+              pagina={paginaSegura}
+              totalPaginas={totalPaginas}
+              porPagina={POR_PAGINA}
+              total={filtrados.length}
+              onCambioPagina={setPagina}
+              contenedor="mt-3 flex items-center justify-between border-t pt-2"
+            />
           </div>
         )}
       </DialogContent>

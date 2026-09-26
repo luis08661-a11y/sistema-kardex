@@ -20,7 +20,7 @@ export default function StockLandingPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Link
               href="/dashboard/stock/base-activa"
-              className="group rounded-xl border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+              className="group rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400">
                 <Warehouse className="h-5 w-5" />
               </div>
@@ -35,7 +35,7 @@ export default function StockLandingPage() {
 
             <Link
               href="/dashboard/stock/producto-terminado"
-              className="group rounded-xl border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+              className="group rounded-xl border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400">
                 <Boxes className="h-5 w-5" />
               </div>

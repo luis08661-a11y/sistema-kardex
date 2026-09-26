@@ -67,8 +67,10 @@ export async function exportProductosExcel(rows: ProductoExportRow[]) {
 }
 
 export async function exportProductosPDF(rows: ProductoExportRow[]) {
-  const { jsPDF } = await import("jspdf");
-  const { default: autoTable } = await import("jspdf-autotable");
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
   doc.setFontSize(14);

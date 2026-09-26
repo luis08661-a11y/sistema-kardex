@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useEffectEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { toast } from "sonner";
@@ -106,16 +106,20 @@ export function ProductoDialog({ open, onOpenChange, editing, catalogos }: Props
   const [state, formAction, actionPending] = useActionState(guardarProducto, initialState);
   const isPT = tipoInv === "PRODUCTO_TERMINADO";
 
+  const handleExito = useEffectEvent(() => {
+    toast.success(state.message);
+    router.refresh();
+    setTimeout(() => onOpenChange(false), 0);
+  });
+
   useEffect(() => {
     if (!state.message) return;
     if (state.success) {
-      toast.success(state.message);
-      router.refresh();
-      const t = setTimeout(() => onOpenChange(false), 0);
-      return () => clearTimeout(t);
+      handleExito();
+    } else {
+      toast.error(state.message);
     }
-    toast.error(state.message);
-  }, [state, router, onOpenChange]);
+  }, [state]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -16,6 +16,7 @@ export function SiteHeader() {
         <Button
           variant="ghost"
           size="icon"
+          aria-label="Abrir o cerrar menú"
           className="-ml-1"
           onClick={toggleSidebar}
         >

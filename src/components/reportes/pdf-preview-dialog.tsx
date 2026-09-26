@@ -3,6 +3,7 @@
 import { FileDown, Loader2, Printer, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PdfPreview } from "@/components/ui/pdf-preview";
 import {
   Dialog,
   DialogContent,
@@ -23,14 +24,16 @@ export function PdfPreviewDialog({
   open,
   onOpenChange,
   url,
-  filename,
   onDescargar,
   cargando,
   titulo = "Vista previa del reporte",
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl! overflow-hidden border-slate-800 bg-[#0b1220] p-0 text-slate-200">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-5xl! overflow-hidden border-slate-800 bg-[#0b1220] p-0 text-slate-200"
+      >
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 px-4 py-3">
           <DialogTitle className="flex items-center gap-2 text-sm font-semibold text-white">
             <span className="flex size-7 items-center justify-center rounded-lg bg-red-500/15 text-red-400">
@@ -58,11 +61,11 @@ export function PdfPreviewDialog({
               type="button"
               size="sm"
               disabled={cargando || !url}
-              className="gap-1.5 bg-red-600 text-[11px] text-white hover:bg-red-700"
+              className="gap-1.5 bg-rose-500 text-white hover:bg-rose-600"
               onClick={onDescargar}
             >
               <FileDown className="size-3.5" />
-              Descargar PDF
+              Descargar PDF A4
             </Button>
             <Button
               type="button"
@@ -84,11 +87,7 @@ export function PdfPreviewDialog({
               Generando vista previa...
             </div>
           ) : (
-            <iframe
-              src={url}
-              title={filename}
-              className="h-full w-full rounded-lg border border-slate-800 bg-white"
-            />
+            <PdfPreview key={url} url={url} />
           )}
         </div>
       </DialogContent>

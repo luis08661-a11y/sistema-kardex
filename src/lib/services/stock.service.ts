@@ -49,8 +49,10 @@ export async function obtenerResumenStockPT(filters: {
     _sum: { entradaCan: true, salidaCan: true, entradaCostoTotal: true, salidaCostoTotal: true },
   });
   const productIds = [...new Set(rows.map((r) => r.productoId))];
-  const products = await prisma.producto.findMany({ where: { id: { in: productIds } }, select: { id: true, codigo: true, descripcion: true } });
-  const presentations = await prisma.presentacion.findMany({ where: { id: { in: rows.flatMap((r) => r.presentacionId ? [r.presentacionId] : []) } }, select: { id: true, nombre: true } });
+  const [products, presentations] = await Promise.all([
+    prisma.producto.findMany({ where: { id: { in: productIds } }, select: { id: true, codigo: true, descripcion: true } }),
+    prisma.presentacion.findMany({ where: { id: { in: rows.flatMap((r) => r.presentacionId ? [r.presentacionId] : []) } }, select: { id: true, nombre: true } }),
+  ]);
   const pm = new Map(products.map((p) => [p.id, p]));
   const sm = new Map(presentations.map((p) => [p.id, p]));
   return rows.map((r) => ({

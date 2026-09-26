@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Printer, FileText, Download, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PdfPreview } from "@/components/ui/pdf-preview";
 import {
   Dialog,
   DialogContent,
@@ -34,16 +35,17 @@ interface Props {
 export function TicketPreviewDialog({ venta, open, onOpenChange }: Props) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) setPdfUrl(null);
-  }, [open]);
-
   useEffect(
     () => () => {
       if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     },
     [pdfUrl],
   );
+
+  const manejarOpenChange = (nuevoOpen: boolean) => {
+    if (!nuevoOpen) setPdfUrl(null);
+    onOpenChange(nuevoOpen);
+  };
 
   const imprimir = () => window.print();
   const verPdf = async () => {
@@ -58,7 +60,7 @@ export function TicketPreviewDialog({ venta, open, onOpenChange }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={manejarOpenChange}>
       <DialogContent className="max-w-lg! print:static print:max-w-none print:w-full print:translate-x-0 print:translate-y-0 print:rounded-none print:ring-0">
         <style>{`@media print {
           [data-slot="dialog-overlay"] { display: none !important; }
@@ -102,11 +104,9 @@ export function TicketPreviewDialog({ venta, open, onOpenChange }: Props) {
                     </Button>
                   </div>
                 </DialogHeader>
-                <iframe
-                  src={pdfUrl}
-                  title="Vista previa PDF"
-                  className="h-[68vh] w-full rounded border bg-white"
-                />
+                <div className="h-[68vh] w-full overflow-hidden rounded border bg-slate-100">
+                  <PdfPreview key={pdfUrl} url={pdfUrl} />
+                </div>
               </div>
             ) : (
               <>
@@ -143,6 +143,7 @@ export function TicketPreviewDialog({ venta, open, onOpenChange }: Props) {
                       year: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
+                      timeZone: "America/Lima",
                     })}
                   </span>
                 </div>
@@ -171,8 +172,8 @@ export function TicketPreviewDialog({ venta, open, onOpenChange }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {venta.detalles.map((d, i) => (
-                      <tr key={i}>
+                    {venta.detalles.map((d) => (
+                      <tr key={`${d.codigo}-${d.descripcion}-${d.precioUnitario}`}>
                         <td>
                           <div className="font-bold">{d.descripcion}</div>
                           <div>{d.codigo}</div>
@@ -244,7 +245,7 @@ export function TicketPreviewDialog({ venta, open, onOpenChange }: Props) {
             </div>
             <div className="print:hidden">
               <div className="flex items-center justify-end gap-2 border-t pt-4">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                <Button variant="outline" onClick={() => manejarOpenChange(false)}>
                   Cerrar
                 </Button>
                 <Button variant="outline" onClick={verPdf} className="gap-2">

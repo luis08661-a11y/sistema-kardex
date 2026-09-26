@@ -1,5 +1,7 @@
 "use client";
 
+import { ReportFirma } from "@/components/reportes/report-firma";
+
 export type StockBaseActivaReportData = {
   empresa: {
     ruc: string;
@@ -36,7 +38,7 @@ const fmt = (n: number) =>
 
 export default function StockBaseActivaReport({ data }: { data: StockBaseActivaReportData }) {
   const totalGeneral = data.items.reduce((acc, g) => acc + g.totalKg, 0);
-  const fecha = data.fechaInforme.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const fecha = data.fechaInforme.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Lima" });
   const logoRef = data.empresa.logoUrl;
 
   return (
@@ -98,22 +100,7 @@ export default function StockBaseActivaReport({ data }: { data: StockBaseActivaR
             <div className="text-[10px] font-medium text-slate-700">Método de valuación: PEPS · Unidad: Kg</div>
           </div>
 
-          <div className="report-firma">
-            <div className="firma-box">
-              {data.empresa.firmaUrl ? (
-                <img src={data.empresa.firmaUrl} alt="Firma" className="mx-auto h-16 object-contain" />
-              ) : (
-                <div className="firma-space" />
-              )}
-              <div className="mt-1 text-[10px] font-bold uppercase text-slate-700">
-                {data.empresa.responsableReporte ?? "RESPONSABLE"}
-              </div>
-              <div className="text-[9px] uppercase text-slate-600">
-                {data.empresa.cargoReporte ?? ""}
-              </div>
-              <div className="text-[9px] text-slate-600">{data.empresa.razonSocial}</div>
-            </div>
-          </div>
+          <ReportFirma empresa={data.empresa} />
         </div>
       </div>
     </div>

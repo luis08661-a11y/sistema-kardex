@@ -98,16 +98,17 @@ main()
     // ============================================================
     // 1. ROLES Y USUARIO ADMINISTRADOR
     // ============================================================
-    const adminRole = await prisma.role.upsert({
-      where: { name: "ADMIN" },
-      update: {},
-      create: {
-        name: "ADMIN",
-        description: "Administrador del sistema",
-      },
-    });
-  
-    const password = await bcrypt.hash("Admin123*", 10);
+    const [adminRole, password] = await Promise.all([
+      prisma.role.upsert({
+        where: { name: "ADMIN" },
+        update: {},
+        create: {
+          name: "ADMIN",
+          description: "Administrador del sistema",
+        },
+      }),
+      bcrypt.hash("Admin123*", 10),
+    ]);
   
     const admin = await prisma.user.upsert({
       where: { username: "admin" },
@@ -152,10 +153,12 @@ main()
     ["STOCK.CONSULTAR", "Consultar stock y Kardex", "STOCK"],
     ["REPORTES.CONSULTAR", "Consultar reportes", "REPORTES"],
   ];
-  for (const [codigo, nombre, modulo] of permissions) {
-    const permission = await prisma.permission.upsert({ where: { codigo }, update: { nombre, modulo, activo: true }, create: { codigo, nombre, modulo, activo: true } });
-    await prisma.rolePermission.upsert({ where: { roleId_permissionId: { roleId: adminRole.id, permissionId: permission.id } }, update: {}, create: { roleId: adminRole.id, permissionId: permission.id } });
-  }
+  await Promise.all(
+    permissions.map(async ([codigo, nombre, modulo]) => {
+      const permission = await prisma.permission.upsert({ where: { codigo }, update: { nombre, modulo, activo: true }, create: { codigo, nombre, modulo, activo: true } });
+      await prisma.rolePermission.upsert({ where: { roleId_permissionId: { roleId: adminRole.id, permissionId: permission.id } }, update: {}, create: { roleId: adminRole.id, permissionId: permission.id } });
+    }),
+  );
 
   
     // ============================================================
@@ -173,35 +176,36 @@ main()
       },
     });
   
-    const periodo = await prisma.periodo.upsert({
-      where: {
-        empresaId_anio: {
+    const [periodo, establecimiento] = await Promise.all([
+      prisma.periodo.upsert({
+        where: {
+          empresaId_anio: {
+            empresaId: empresa.id,
+            anio: 2026,
+          },
+        },
+        update: { activo: true },
+        create: {
           empresaId: empresa.id,
           anio: 2026,
+          activo: true,
         },
-      },
-      update: { activo: true },
-      create: {
-        empresaId: empresa.id,
-        anio: 2026,
-        activo: true,
-      },
-    });
-  
-    const establecimiento = await prisma.establecimiento.upsert({
-      where: {
-        empresaId_nombre: {
+      }),
+      prisma.establecimiento.upsert({
+        where: {
+          empresaId_nombre: {
+            empresaId: empresa.id,
+            nombre: "HUANCHACO - LAS LOMAS",
+          },
+        },
+        update: { activo: true },
+        create: {
           empresaId: empresa.id,
           nombre: "HUANCHACO - LAS LOMAS",
+          codigo: null,
         },
-      },
-      update: { activo: true },
-      create: {
-        empresaId: empresa.id,
-        nombre: "HUANCHACO - LAS LOMAS",
-        codigo: null,
-      },
-    });
+      }),
+    ]);
   
     // ============================================================
     // 3. ALMACENAMIENTO
@@ -237,15 +241,18 @@ main()
       "BOLSAS GRANDES DE ALMACENAMIENTO BASE ACTIVA",
     ];
   
-    const unidadMap = {};
-  
-    for (const nombre of unidades) {
-      unidadMap[nombre] = await prisma.unidadMedida.upsert({
-        where: { nombre },
-        update: { activo: true },
-        create: { nombre, codigo: null },
-      });
-    }
+const unidadMap = Object.fromEntries(
+      await Promise.all(
+        unidades.map(async (nombre) => {
+          const unidad = await prisma.unidadMedida.upsert({
+            where: { nombre },
+            update: { activo: true },
+            create: { nombre, codigo: null },
+          });
+          return [nombre, unidad];
+        }),
+      ),
+    );
   
 // ============================================================
     // 5. TIPOS DE EXISTENCIA (TABLA 5 / TIPO DE AFECTACIÓN)
@@ -253,18 +260,21 @@ main()
     //   1 -> PRODUCTO TERMINADO
     //   2 -> PRODUCTO EN PROCESO
     // ============================================================
-    const tiposExistencia = {};
-   
-    for (const item of [
-      { codigo: "1", nombre: "PRODUCTO TERMINADO" },
-      { codigo: "2", nombre: "PRODUCTO EN PROCESO" },
-    ]) {
-      tiposExistencia[item.codigo] = await prisma.tipoExistencia.upsert({
-        where: { codigo: item.codigo },
-        update: { nombre: item.nombre, activo: true },
-        create: item,
-      });
-    }
+    const tiposExistencia = Object.fromEntries(
+      await Promise.all(
+        [
+          { codigo: "1", nombre: "PRODUCTO TERMINADO" },
+          { codigo: "2", nombre: "PRODUCTO EN PROCESO" },
+        ].map(async (item) => {
+          const tipo = await prisma.tipoExistencia.upsert({
+            where: { codigo: item.codigo },
+            update: { nombre: item.nombre, activo: true },
+            create: item,
+          });
+          return [item.codigo, tipo];
+        }),
+      ),
+    );
   
     // ============================================================
     // 6. CATÁLOGOS BÁSICOS
@@ -275,13 +285,15 @@ main()
       { codigo: "SALIDA", nombre: "SALIDA" },
     ];
   
-    for (const op of operaciones) {
-      await prisma.tipoOperacion.upsert({
-        where: { codigo: op.codigo },
-        update: { nombre: op.nombre, activo: true },
-        create: op,
-      });
-    }
+    await Promise.all(
+      operaciones.map((op) =>
+        prisma.tipoOperacion.upsert({
+          where: { codigo: op.codigo },
+          update: { nombre: op.nombre, activo: true },
+          create: op,
+        }),
+      ),
+    );
   
     // Se mantiene el catálogo vacío de categorías/marcas/afectación
     // porque el Excel proporcionado no define aquí sus valores concretos.
@@ -302,29 +314,31 @@ main()
       { codigo: "TV", codigoExistencia: "08", descripcion: "Trichoderma viride" },
     ];
 
-    for (const p of baseProducts) {
-      await prisma.producto.upsert({
-        where: { codigo: p.codigo },
-        update: {
-          tipoInventario: "BASE_ACTIVA",
-          codigoExistencia: p.codigoExistencia,
-          descripcion: p.descripcion,
-          tipoExistenciaId: tiposExistencia["2"].id,
-          unidadMedidaId: unidadMap["BOLSAS GRANDES DE ALMACENAMIENTO BASE ACTIVA"].id,
-          metodoValuacion: "PEPS",
-          activo: true,
-        },
-        create: {
-          tipoInventario: "BASE_ACTIVA",
-          codigo: p.codigo,
-          codigoExistencia: p.codigoExistencia,
-          descripcion: p.descripcion,
-          tipoExistenciaId: tiposExistencia["2"].id,
-          unidadMedidaId: unidadMap["BOLSAS GRANDES DE ALMACENAMIENTO BASE ACTIVA"].id,
-          metodoValuacion: "PEPS",
-        },
-      });
-    }
+    await Promise.all(
+      baseProducts.map((p) =>
+        prisma.producto.upsert({
+          where: { codigo: p.codigo },
+          update: {
+            tipoInventario: "BASE_ACTIVA",
+            codigoExistencia: p.codigoExistencia,
+            descripcion: p.descripcion,
+            tipoExistenciaId: tiposExistencia["2"].id,
+            unidadMedidaId: unidadMap["BOLSAS GRANDES DE ALMACENAMIENTO BASE ACTIVA"].id,
+            metodoValuacion: "PEPS",
+            activo: true,
+          },
+          create: {
+            tipoInventario: "BASE_ACTIVA",
+            codigo: p.codigo,
+            codigoExistencia: p.codigoExistencia,
+            descripcion: p.descripcion,
+            tipoExistenciaId: tiposExistencia["2"].id,
+            unidadMedidaId: unidadMap["BOLSAS GRANDES DE ALMACENAMIENTO BASE ACTIVA"].id,
+            metodoValuacion: "PEPS",
+          },
+        }),
+      ),
+    );
   
     // ============================================================
     // 8. PRODUCTOS TERMINADOS
@@ -361,43 +375,45 @@ main()
       ["16", "BIO BT", "POMO DE 1 LITRO"],
     ];
   
-    for (const [codigo, descripcion, unidad] of ptProducts) {
-      const producto = await prisma.producto.upsert({
-        where: { codigo },
-        update: {
-          tipoInventario: "PRODUCTO_TERMINADO",
-          codigoExistencia: codigo,
-          descripcion,
-          tipoExistenciaId: tiposExistencia["1"].id,
-          unidadMedidaId: unidadMap[unidad].id,
-          metodoValuacion: "PEPS",
-          activo: true,
-        },
-        create: {
-          tipoInventario: "PRODUCTO_TERMINADO",
-          codigo,
-          codigoExistencia: codigo,
-          descripcion,
-          tipoExistenciaId: tiposExistencia["1"].id,
-          unidadMedidaId: unidadMap[unidad].id,
-          metodoValuacion: "PEPS",
-        },
-      });
-  
-      await prisma.presentacion.upsert({
-        where: { productoId: producto.id },
-        update: {
-          nombre: unidad,
-          unidadMedidaId: unidadMap[unidad].id,
-          activo: true,
-        },
-        create: {
-          productoId: producto.id,
-          nombre: unidad,
-          unidadMedidaId: unidadMap[unidad].id,
-        },
-      });
-    }
+    await Promise.all(
+      ptProducts.map(async ([codigo, descripcion, unidad]) => {
+        const producto = await prisma.producto.upsert({
+          where: { codigo },
+          update: {
+            tipoInventario: "PRODUCTO_TERMINADO",
+            codigoExistencia: codigo,
+            descripcion,
+            tipoExistenciaId: tiposExistencia["1"].id,
+            unidadMedidaId: unidadMap[unidad].id,
+            metodoValuacion: "PEPS",
+            activo: true,
+          },
+          create: {
+            tipoInventario: "PRODUCTO_TERMINADO",
+            codigo,
+            codigoExistencia: codigo,
+            descripcion,
+            tipoExistenciaId: tiposExistencia["1"].id,
+            unidadMedidaId: unidadMap[unidad].id,
+            metodoValuacion: "PEPS",
+          },
+        });
+
+        await prisma.presentacion.upsert({
+          where: { productoId: producto.id },
+          update: {
+            nombre: unidad,
+            unidadMedidaId: unidadMap[unidad].id,
+            activo: true,
+          },
+          create: {
+            productoId: producto.id,
+            nombre: unidad,
+            unidadMedidaId: unidadMap[unidad].id,
+          },
+        });
+      }),
+    );
   
     console.log("✅ Seed completado.");
     console.log("👤 Usuario: admin");

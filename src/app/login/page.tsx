@@ -91,7 +91,7 @@ export default function Login() {
           <Button
             type="submit"
             disabled={pending}
-            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 transition mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
             {pending ? "Ingresando..." : "Ingresar al Sistema"}
           </Button>
         </form>

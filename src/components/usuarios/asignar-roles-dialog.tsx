@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck } from "lucide-react";
 
@@ -48,6 +48,8 @@ export function AsignarRolesDialog({ open, onOpenChange, usuario, roles }: Props
     );
   };
 
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+
   const guardar = async () => {
     if (!usuario) return;
     setGuardando(true);
@@ -84,7 +86,7 @@ export function AsignarRolesDialog({ open, onOpenChange, usuario, roles }: Props
               className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
             >
               <Checkbox
-                checked={selected.includes(rol.id)}
+                checked={selectedSet.has(rol.id)}
                 onCheckedChange={() => toggle(rol.id)}
               />
               <span className="text-sm font-medium">{rol.name}</span>

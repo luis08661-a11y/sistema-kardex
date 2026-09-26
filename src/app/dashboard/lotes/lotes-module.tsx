@@ -11,10 +11,6 @@ import {
   PackagePlusIcon,
   PencilIcon,
   Trash2Icon,
-  ChevronsLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronsRightIcon,
   BoxesIcon,
   LinkIcon,
   ScaleIcon,
@@ -27,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PaginacionTabla } from "@/components/shared/paginacion-tabla";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -509,49 +506,20 @@ export function LotesModule({ lotes, contexto }: Props) {
           </div>
 
           {/* paginación */}
-          <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="tabular-nums">
-                Página {table.state.pagination.pageIndex + 1} de {Math.max(table.getPageCount(), 1)}
-              </span>
-              <span className="tabular-nums">
-                {(table.state.pagination.pageIndex * table.state.pagination.pageSize + 1).toLocaleString("es-PE")}–
-                {Math.min((table.state.pagination.pageIndex + 1) * table.state.pagination.pageSize, rows.length).toLocaleString("es-PE")} de {rows.length.toLocaleString("es-PE")}
-              </span>
-              <Select
-                value={String(table.state.pagination.pageSize)}
-                onValueChange={(v) => {
-                  table.setPageSize(Number(v));
-                  table.setPageIndex(0);
-                }}
-              >
-                <SelectTrigger size="sm" className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[5, 10, 20, 50].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {n}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-1.5">
-              <Button variant="outline" size="icon-sm" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-                <ChevronsLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                <ChevronLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                <ChevronRightIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
-                <ChevronsRightIcon className="size-4" />
-              </Button>
-            </div>
-          </div>
+          <PaginacionTabla
+            pageIndex={table.state.pagination.pageIndex}
+            totalPaginas={Math.max(table.getPageCount(), 1)}
+            pageSize={table.state.pagination.pageSize}
+            total={rows.length}
+            onPageSizeChange={n => {
+              table.setPageSize(n);
+              table.setPageIndex(0);
+            }}
+            onPrevious={() => table.previousPage()}
+            onNext={() => table.nextPage()}
+            singular="lote"
+            plural="lotes"
+          />
         </CardContent>
       </Card>
 

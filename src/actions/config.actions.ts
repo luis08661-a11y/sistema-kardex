@@ -16,22 +16,40 @@ import {
   crearEstablecimientoService,
   actualizarEstablecimientoService,
   cambiarEstadoEstablecimientoService,
+  eliminarEmpresaService,
+  eliminarPeriodoService,
+  eliminarEstablecimientoService,
   obtenerConfiguracionService,
 } from "@/lib/services/config.service";
 import { prisma } from "@/lib/db/prisma";
+import { getSession } from "@/lib/auth/session";
 import {
   guardarImagenEmpresa,
   quitarUploadEmpresa,
 } from "@/lib/storage.service";
 
-export type ConfigState = { success: boolean; message: string };
+export type ConfigState = {
+  success: boolean;
+  message: string;
+  logoUrl?: string | null;
+  firmaUrl?: string | null;
+};
 
 const text = (formData: FormData, key: string) => String(formData.get(key) ?? "");
 const id = (formData: FormData) => String(formData.get("id") ?? "");
 
+async function requerirSesion(): Promise<ConfigState | null> {
+  const session = await getSession();
+  return session ? null : { success: false, message: "No autorizado" };
+}
+
 function errorMessage(error: unknown, fallback: string) {
-  if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-    return "Ya existe un registro con esos datos.";
+  if (error && typeof error === "object" && "code" in error) {
+    if (error.code === "P2002") return "Ya existe un registro con esos datos.";
+    if (error.code === "P2003") {
+      return "No se puede eliminar: el registro tiene datos asociados.";
+    }
+    if (error.code === "P2025") return "El registro ya no existe.";
   }
   return error instanceof Error ? error.message : fallback;
 }
@@ -41,6 +59,8 @@ export async function obtenerConfiguracion() {
 }
 
 export async function guardarEmpresa(_prev: ConfigState, formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
   const parsed = empresaSchema.safeParse({ ruc: text(formData, "ruc"), razonSocial: text(formData, "razonSocial") });
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   try {
@@ -53,6 +73,8 @@ export async function guardarEmpresa(_prev: ConfigState, formData: FormData): Pr
 }
 
 export async function cambiarEstadoEmpresa(formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
   const empresaId = id(formData);
   const activo = text(formData, "activo") === "true";
   if (!empresaId) return { success: false, message: "Empresa inválida" };
@@ -60,7 +82,25 @@ export async function cambiarEstadoEmpresa(formData: FormData): Promise<ConfigSt
   catch (error) { return { success: false, message: errorMessage(error, "No se pudo actualizar el estado") }; }
 }
 
+export async function eliminarEmpresa(formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
+  const empresaId = id(formData);
+  if (!empresaId) return { success: false, message: "Empresa inválida" };
+  try {
+    const eliminada = await eliminarEmpresaService(empresaId);
+    await Promise.all([
+      quitarUploadEmpresa(eliminada.logoUrl),
+      quitarUploadEmpresa(eliminada.firmaUrl),
+    ]);
+    revalidatePath("/dashboard/config");
+    return { success: true, message: "Empresa eliminada" };
+  } catch (error) { return { success: false, message: errorMessage(error, "No se pudo eliminar la empresa") }; }
+}
+
 export async function guardarPeriodo(_prev: ConfigState, formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
   const parsed = periodoSchema.safeParse({ empresaId: text(formData, "empresaId"), anio: text(formData, "anio") });
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   try {
@@ -73,6 +113,8 @@ export async function guardarPeriodo(_prev: ConfigState, formData: FormData): Pr
 }
 
 export async function cambiarEstadoPeriodo(formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
   const periodoId = id(formData);
   const activo = text(formData, "activo") === "true";
   if (!periodoId) return { success: false, message: "Periodo inválido" };
@@ -80,7 +122,18 @@ export async function cambiarEstadoPeriodo(formData: FormData): Promise<ConfigSt
   catch (error) { return { success: false, message: errorMessage(error, "No se pudo actualizar el estado") }; }
 }
 
+export async function eliminarPeriodo(formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
+  const periodoId = id(formData);
+  if (!periodoId) return { success: false, message: "Periodo inválido" };
+  try { await eliminarPeriodoService(periodoId); revalidatePath("/dashboard/config"); return { success: true, message: "Periodo eliminado" }; }
+  catch (error) { return { success: false, message: errorMessage(error, "No se pudo eliminar el periodo") }; }
+}
+
 export async function guardarEstablecimiento(_prev: ConfigState, formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
   const parsed = establecimientoSchema.safeParse({
     empresaId: text(formData, "empresaId"),
     codigo: text(formData, "codigo"),
@@ -98,11 +151,22 @@ export async function guardarEstablecimiento(_prev: ConfigState, formData: FormD
 }
 
 export async function cambiarEstadoEstablecimiento(formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
   const establecimientoId = id(formData);
   const activo = text(formData, "activo") === "true";
   if (!establecimientoId) return { success: false, message: "Establecimiento inválido" };
   try { await cambiarEstadoEstablecimientoService(establecimientoId, activo); revalidatePath("/dashboard/config"); return { success: true, message: "Estado actualizado" }; }
   catch (error) { return { success: false, message: errorMessage(error, "No se pudo actualizar el estado") }; }
+}
+
+export async function eliminarEstablecimiento(formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
+  const establecimientoId = id(formData);
+  if (!establecimientoId) return { success: false, message: "Establecimiento inválido" };
+  try { await eliminarEstablecimientoService(establecimientoId); revalidatePath("/dashboard/config"); return { success: true, message: "Establecimiento eliminado" }; }
+  catch (error) { return { success: false, message: errorMessage(error, "No se pudo eliminar el establecimiento") }; }
 }
 
 function parseEmpresaArchivo(formData: FormData): { logo: File | null; firma: File | null } {
@@ -111,6 +175,8 @@ function parseEmpresaArchivo(formData: FormData): { logo: File | null; firma: Fi
 }
 
 export async function guardarEmpresaReporte(formData: FormData): Promise<ConfigState> {
+  const noAutorizado = await requerirSesion();
+  if (noAutorizado) return noAutorizado;
   const empresaId = id(formData);
   if (!empresaId) return { success: false, message: "Empresa inválida" };
   const responsableReporte = text(formData, "responsableReporte");
@@ -125,6 +191,6 @@ export async function guardarEmpresaReporte(formData: FormData): Promise<ConfigS
     if (firma) { await quitarUploadEmpresa(empresa.firmaUrl); firmaUrl = await guardarImagenEmpresa(firma, empresaId, "firma"); }
     await prisma.empresa.update({ where: { id: empresaId }, data: { logoUrl, firmaUrl, responsableReporte: responsableReporte || null, cargoReporte: cargoReporte || null } });
     revalidatePath("/dashboard/config");
-    return { success: true, message: "Configuración de reportes guardada" };
+    return { success: true, message: "Configuración de reportes guardada", logoUrl, firmaUrl };
   } catch (error) { return { success: false, message: errorMessage(error, "No se pudo guardar la configuración de reportes") }; }
 }

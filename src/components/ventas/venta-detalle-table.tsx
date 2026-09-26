@@ -1,10 +1,11 @@
 "use client";
 
-import { Minus, Plus, Trash2, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PaginacionModal } from "@/components/shared/paginacion-modal";
 import {
   formatearMoneda,
   type LineaDetalle,
@@ -168,43 +169,14 @@ export function VentaDetalleTable({
         </tfoot>
       </table>
 
-      {lineas.length > POR_PAGINA && (
-        <div className="flex items-center justify-between border-t bg-muted/40 px-3 py-1.5">
-          <span className="text-[11px] text-muted-foreground tabular-nums">
-            {paginaSegura * POR_PAGINA + 1}–
-            {Math.min(
-              (paginaSegura + 1) * POR_PAGINA,
-              lineas.length,
-            )}{" "}
-            de {lineas.length} productos
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-xs"
-              disabled={paginaSegura === 0}
-              onClick={() => setPagina(p => Math.max(0, p - 1))}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft />
-            </Button>
-            <span className="px-1 text-[11px] font-semibold tabular-nums text-muted-foreground">
-              {paginaSegura + 1} / {totalPaginas}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-xs"
-              disabled={paginaSegura + 1 === totalPaginas}
-              onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight />
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginacionModal
+        pagina={paginaSegura}
+        totalPaginas={totalPaginas}
+        porPagina={POR_PAGINA}
+        total={lineas.length}
+        onCambioPagina={setPagina}
+        contenedor="flex items-center justify-between border-t bg-muted/40 px-3 py-1.5"
+      />
     </div>
   );
 }

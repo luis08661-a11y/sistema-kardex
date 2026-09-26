@@ -7,7 +7,8 @@ import { UserPlus, Pencil, Loader2 } from "lucide-react";
 import { guardarCliente } from "@/actions/cliente.actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { CampoFormulario } from "@/components/shared/modulo-cabecera";
+import { SelectTipoDocumento } from "@/components/shared/select-tipo-documento";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -17,14 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TIPO_DOCUMENTO_LABEL, type TipoDocumento } from "@/components/ventas/types";
+import type { TipoDocumento } from "@/components/ventas/types";
 import type { ClienteDTO } from "@/lib/services/cliente.service";
 
 interface Props {
@@ -106,70 +100,48 @@ export function ClienteDialog({ open, onOpenChange, cliente, onGuardado }: Props
 
         <div className="grid gap-4">
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Tipo documento</Label>
-              <Select
-                value={tipoDocumento}
-                onValueChange={(v) => setTipoDocumento((v ?? "DNI") as TipoDocumento)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(TIPO_DOCUMENTO_LABEL) as TipoDocumento[]).map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {TIPO_DOCUMENTO_LABEL[t]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Nº documento *</Label>
+            <SelectTipoDocumento value={tipoDocumento} onValueChange={setTipoDocumento} />
+            <CampoFormulario label="Nº documento *">
               <Input
                 value={numeroDocumento}
                 onChange={(e) => setNumeroDocumento(e.target.value)}
                 placeholder="Ej. 20123456789"
               />
-            </div>
+            </CampoFormulario>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Razón social / Nombre *</Label>
+          <CampoFormulario label="Razón social / Nombre *">
             <Input
               value={razonSocial}
               onChange={(e) => setRazonSocial(e.target.value)}
               placeholder="Nombre del cliente"
             />
-          </div>
+          </CampoFormulario>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Dirección</Label>
+          <CampoFormulario label="Dirección">
             <Input
               value={direccion}
               onChange={(e) => setDireccion(e.target.value)}
               placeholder="Dirección (opcional)"
             />
-          </div>
+          </CampoFormulario>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Teléfono</Label>
+            <CampoFormulario label="Teléfono">
               <Input
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="Ej. 999 888 777"
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Email</Label>
+            </CampoFormulario>
+            <CampoFormulario label="Email">
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="correo@ejemplo.com"
               />
-            </div>
+            </CampoFormulario>
           </div>
 
           {editando && (

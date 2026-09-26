@@ -234,6 +234,7 @@ export function CartTable({
                       type="button"
                       variant="outline"
                       size="icon-sm"
+                      aria-label="Disminuir cantidad"
                       disabled={item.cantidad <= 1}
                       onClick={() =>
                         onChangeCantidad(item.productoId, item.cantidad - 1)
@@ -254,6 +255,7 @@ export function CartTable({
                       type="button"
                       variant="outline"
                       size="icon-sm"
+                      aria-label="Aumentar cantidad"
                       onClick={() =>
                         onChangeCantidad(item.productoId, item.cantidad + 1)
                       }
@@ -276,6 +278,7 @@ export function CartTable({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
+                    aria-label="Quitar producto"
                     className="size-6 text-destructive/60 hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => onRemove(item.productoId)}>
                     <Trash2 className="size-3" />

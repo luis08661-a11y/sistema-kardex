@@ -176,7 +176,7 @@ export async function exportarPdfStockPTOficial(data: StockProductoTerminadoRepo
   doc.setFontSize(9);
   doc.text("PRODUCTO TERMINADO", pageW / 2 + 12, 10.5, { align: "center" });
 
-  let y = 22;
+  const y = 22;
   doc.setTextColor(30, 41, 59);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);

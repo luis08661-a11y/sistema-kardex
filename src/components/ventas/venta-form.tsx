@@ -51,7 +51,7 @@ export function VentaForm() {
   const [tipoComprobante, setTipoComprobante] = useState<TipoComprobante>("COTIZACION");
   const [serie, setSerie] = useState("COT");
   const [numeroPreview, setNumeroPreview] = useState<number | null>(null);
-  const [fecha, setFecha] = useState(fechaLocalISO());
+  const [fecha, setFecha] = useState(() => fechaLocalISO());
   const [formaPago, setFormaPago] = useState<FormaPago>("CONTADO");
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("EFECTIVO");
   const [observacion, setObservacion] = useState("");

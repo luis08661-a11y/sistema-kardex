@@ -1,6 +1,10 @@
 import type { VentaDTO } from "@/lib/services/venta.service";
 
-export type TipoComprobante = "COTIZACION" | "FACTURA" | "BOLETA";
+export type TipoComprobante =
+  | "COTIZACION"
+  | "FACTURA"
+  | "BOLETA"
+  | "NOTA_DE_VENTA";
 export type TipoDocumento = "DNI" | "RUC" | "CE" | "PASAPORTE" | "OTRO";
 export type FormaPago = "CONTADO" | "CREDITO";
 export type MetodoPago =
@@ -93,6 +97,7 @@ export const TIPO_COMPROBANTE_LABEL: Record<TipoComprobante, string> = {
   COTIZACION: "Cotización",
   FACTURA: "Factura",
   BOLETA: "Boleta",
+  NOTA_DE_VENTA: "Nota de Venta",
 };
 
 export const TIPO_DOCUMENTO_LABEL: Record<TipoDocumento, string> = {

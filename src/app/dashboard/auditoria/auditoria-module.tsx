@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { PaginacionTabla } from "@/components/shared/paginacion-tabla";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -21,7 +22,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 
 type AuditoriaRow = {
@@ -268,28 +268,19 @@ export function AuditoriaModule({ auditoria }: Props) {
           </div>
 
           {/* Paginación */}
-          <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between shrink-0">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span>Página {pageIndex + 1} de {Math.max(1, Math.ceil(filtrados.length / pageSize))}</span>
-              <span>{filtrados.length} registro(s)</span>
-              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPageIndex(0); }}>
-                <SelectTrigger size="sm" className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 50, 100].map((n) => (
-                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-1.5">
-              <Button variant="outline" size="icon" className="size-8" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}><ChevronsLeft className="size-4" /></Button>
-              <Button variant="outline" size="icon" className="size-8" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}><ChevronLeft className="size-4" /></Button>
-              <Button variant="outline" size="icon" className="size-8" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}><ChevronRight className="size-4" /></Button>
-              <Button variant="outline" size="icon" className="size-8" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}><ChevronsRight className="size-4" /></Button>
-            </div>
-          </div>
+          <PaginacionTabla
+            pageIndex={pageIndex}
+            totalPaginas={Math.max(1, Math.ceil(filtrados.length / pageSize))}
+            pageSize={pageSize}
+            total={filtrados.length}
+            onPageSizeChange={n => {
+              setPageSize(n);
+              setPageIndex(0);
+            }}
+            onPrevious={() => table.previousPage()}
+            onNext={() => table.nextPage()}
+            pageSizes={[10, 20, 50, 100]}
+          />
         </CardContent>
       </Card>
     </div>

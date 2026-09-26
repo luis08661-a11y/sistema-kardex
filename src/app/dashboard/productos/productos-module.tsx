@@ -23,10 +23,6 @@ import {
   Tag,
   FileSpreadsheet,
   FileText,
-  ChevronsLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronsRightIcon,
   Layers,
   ShieldCheck,
 } from "lucide-react";
@@ -44,13 +40,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cambiarEstadoProducto, eliminarProducto } from "@/actions/productos.actions";
 import {
   exportProductosExcel,
@@ -58,6 +47,7 @@ import {
   type ProductoExportRow,
 } from "@/lib/client-exports";
 import { ProductoDialog } from "@/components/productos/producto-dialog";
+import { PaginacionTabla } from "@/components/shared/paginacion-tabla";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -464,46 +454,17 @@ export function ProductosModule({ productos, catalogos }: Props) {
           </div>
 
           {/* paginación */}
-          <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="tabular-nums">
-                Página {pageIndex + 1} de {totalPaginas}
-              </span>
-              <span className="tabular-nums">
-                {filtered.length > 0
-                  ? `${(pageIndex * pageSize + 1).toLocaleString("es-PE")}–${Math.min((pageIndex + 1) * pageSize, filtered.length).toLocaleString("es-PE")} de ${filtered.length.toLocaleString("es-PE")}`
-                  : "0 resultados"}
-              </span>
-              <Select
-                value={String(pageSize)}
-                onValueChange={v => { setPageSize(Number(v)); setPageIndex(0); }}
-              >
-                <SelectTrigger size="sm" className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[5, 10, 20, 50].map(n => (
-                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-1.5">
-              <Button variant="outline" size="icon-sm" disabled={pageIndex === 0} onClick={() => setPageIndex(0)}>
-                <ChevronsLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex === 0} onClick={() => setPageIndex(p => Math.max(0, p - 1))}>
-                <ChevronLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex + 1 >= totalPaginas} onClick={() => setPageIndex(p => p + 1)}>
-                <ChevronRightIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex + 1 >= totalPaginas} onClick={() => setPageIndex(totalPaginas - 1)}>
-                <ChevronsRightIcon className="size-4" />
-              </Button>
-            </div>
-          </div>
+          <PaginacionTabla
+            pageIndex={pageIndex}
+            totalPaginas={totalPaginas}
+            pageSize={pageSize}
+            total={filtered.length}
+            onPageSizeChange={n => { setPageSize(n); setPageIndex(0); }}
+            onPrevious={() => setPageIndex(p => Math.max(0, p - 1))}
+            onNext={() => setPageIndex(p => p + 1)}
+            singular="producto"
+            plural="productos"
+          />
         </CardContent>
       </Card>
 

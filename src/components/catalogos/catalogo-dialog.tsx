@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useEffectEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { toast } from "sonner";
@@ -95,17 +95,21 @@ export function CatalogoDialog({ open, onOpenChange, data, onGuardado, catalogos
     initialState
   );
 
+  const handleExito = useEffectEvent(() => {
+    toast.success(state.message);
+    router.refresh();
+    onGuardado();
+    setTimeout(() => onOpenChange(false), 0);
+  });
+
   useEffect(() => {
     if (!state.message) return;
     if (state.success) {
-      toast.success(state.message);
-      router.refresh();
-      onGuardado();
-      const t = setTimeout(() => onOpenChange(false), 0);
-      return () => clearTimeout(t);
+      handleExito();
+    } else {
+      toast.error(state.message);
     }
-    toast.error(state.message);
-  }, [state, router, onOpenChange, onGuardado]);
+  }, [state]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

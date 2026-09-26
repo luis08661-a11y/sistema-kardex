@@ -12,19 +12,11 @@ import {
   FlexRender,
 } from "@tanstack/react-table";
 import {
-  CalendarDays,
   FileSpreadsheet,
   FileText,
-  Printer,
-  RotateCcw,
-  Search,
   PackageSearch,
   SlidersHorizontal,
   ClipboardList,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
@@ -37,14 +29,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Combobox,
   ComboboxInput,
   ComboboxContent,
@@ -52,9 +36,11 @@ import {
   ComboboxItem,
   ComboboxEmpty,
 } from "@/components/ui/combobox";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PdfPreviewDialog } from "@/components/reportes/pdf-preview-dialog";
+import { ResumenCabecera } from "@/components/reportes/resumen-cabecera";
+import { BotonesConsultarLimpiar } from "@/components/reportes/botones-consultar-limpiar";
+import { PaginacionTabla } from "@/components/shared/paginacion-tabla";
 import {
   Table,
   TableBody,
@@ -65,11 +51,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const fmt = (n: number) =>
-  n.toLocaleString("es-PE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+const fmtEntero = (n: number) =>
+  n.toLocaleString("es-PE", { maximumFractionDigits: 0 });
 
 const COLUMN_CLASS: Record<string, string> = {
   descripcion: "min-w-[280px]",
@@ -86,6 +69,7 @@ const fechaCorta = (d: string | Date) => {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "America/Lima",
   });
 };
 
@@ -188,11 +172,11 @@ export function ResumenPlanillaModule({
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState(hoyStr);
   const [error, setError] = useState("");
-  const [data, setData] = useState<ResumenData>(inicial);
+  const [data, setData] = useState<ResumenData>(() => inicial);
   const [consultado, setConsultado] = useState(true);
   const [cargando, setCargando] = useState(false);
   const [fechaConsultada, setFechaConsultada] = useState<Date>(
-    new Date(inicial.fechaCorte),
+    () => new Date(inicial.fechaCorte),
   );
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [soloConStock, setSoloConStock] = useState(true);
@@ -290,7 +274,7 @@ export function ResumenPlanillaModule({
           header: "STOCK TOTAL EN KG",
           cell: info => (
             <div className="text-right tabular-nums font-semibold">
-              {fmt(info.row.original.stockKg)}
+              {fmtEntero(info.row.original.stockKg)}
             </div>
           ),
         }),
@@ -359,45 +343,64 @@ export function ResumenPlanillaModule({
     );
   }
 
-
   async function crearPdf(): Promise<jsPDF> {
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const margin = 12;
+    const margin = 18;
 
     let logo: string | null = null;
     if (data.empresa.logoUrl) {
       logo = await imagenComoDataUrl(data.empresa.logoUrl);
     }
 
-    let currentY = 10;
+    let currentY = 14;
+
+    // Posición y tamaño del logo (en mm)
+    const LOGO_X = 13.5; // ← posición X del logo
+    const LOGO_Y = 14; // ← posición Y del logo
+    const LOGO_W = 80; // ← ancho del logo
+    const LOGO_H = 20; // ← alto del logo
 
     function dibujarEncabezado() {
-      currentY = 10;
+      currentY = 14;
 
       if (logo) {
         try {
-          doc.addImage(logo, "PNG", margin, currentY, 80, 20);
-        } catch { /* opcional */ }
+          doc.addImage(logo, "PNG", LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
+        } catch {
+          /* opcional */
+        }
       }
 
       doc.setTextColor(30, 41, 59);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       const rightX = pageW - margin;
-      doc.text(data.empresa.razonSocial, rightX, currentY + 8, { align: "right" });
+      doc.text(data.empresa.razonSocial, rightX, currentY + 8, {
+        align: "right",
+      });
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(`RUC: ${data.empresa.ruc}`, rightX, currentY + 14, { align: "right" });
+      doc.text(`RUC: ${data.empresa.ruc}`, rightX, currentY + 14, {
+        align: "right",
+      });
 
       const titleY = currentY + 22;
       doc.setFillColor(30, 143, 60);
-      doc.rect(margin, titleY, pageW - margin * 2, 8, "F");
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+
+      doc.rect(margin, titleY, pageW - margin * 2, 10, "FD");
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
-      doc.text("CUADRO RESUMEN DE INVENTARIO BASE ACTIVA", pageW / 2, titleY + 5.5, { align: "center" });
+      doc.text(
+        "CUADRO RESUMEN DE INVENTARIO BASE ACTIVA",
+        pageW / 2,
+        titleY + 6.3,
+        { align: "center" },
+      );
 
       currentY = titleY + 10;
     }
@@ -411,11 +414,11 @@ export function ResumenPlanillaModule({
         g.descripcion,
         g.codigo,
         l.lote,
-        fmt(l.stockKg),
+        fmtEntero(l.stockKg),
         tieneSubtotal ? "" : obs,
       ]);
       if (tieneSubtotal) {
-        rows.push(["", "", `TOTAL`, fmt(g.totalKg), obs]);
+        rows.push(["", "", `TOTAL`, fmtEntero(g.totalKg), obs]);
       }
       return rows;
     });
@@ -431,7 +434,7 @@ export function ResumenPlanillaModule({
 
     autoTable(doc, {
       startY: currentY,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: 52, bottom: 18 },
       head: [
         ["DESCRIPCIÓN", "CÓDIGO", "LOTE", "STOCK TOTAL EN KG", "OBSERVACIONES"],
       ],
@@ -454,19 +457,19 @@ export function ResumenPlanillaModule({
         fillColor: [255, 255, 255],
       },
       columnStyles: {
-        0: { cellWidth: 55 },
+        0: { cellWidth: 50 },
         1: { cellWidth: 18, halign: "center" },
         2: { cellWidth: 28, halign: "center" },
         3: { halign: "right" },
-        4: { cellWidth: 45 },
+        4: { cellWidth: 40 },
       },
-      didParseCell: (hookData) => {
+      didParseCell: hookData => {
         if (hookData.section === "body") {
           const row = hookData.row;
           const isSubtotal = subtotalRows.includes(row.index);
 
           if (isSubtotal) {
-            hookData.cell.styles.fillColor = [108,187,132];
+            hookData.cell.styles.fillColor = [108, 187, 132];
             hookData.cell.styles.fontStyle = "bold";
             hookData.cell.styles.fontSize = 9;
           }
@@ -565,34 +568,15 @@ export function ResumenPlanillaModule({
       <div className="flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-3 md:py-4 px-4 lg:px-6">
           {/* ENCABEZADO */}
-          <div className="no-print relative overflow-hidden rounded-xl border p-4 text-white shadow-lg shadow-emerald-500/20">
-            <div className="absolute -right-8 -top-2 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-            <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-            <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
-                  <ClipboardList className="h-5 w-5" />
-                </div>
-                <div>
-                  <h1 className="text-base font-bold tracking-tight md:text-lg">
-                    CUADRO RESUMEN DE INVENTARIO BASE ACTIVA
-                  </h1>
-                  <p className="text-xs text-zinc-200">
-                    Lotes, movimientos y existencias de materia prima en
-                    kilogramos.
-                  </p>
-                </div>
-              </div>
-              {consultado && hayRegistros && (
-                <Badge
-                  variant="outline"
-                  className="border-white/30 bg-white/10 text-white backdrop-blur-sm">
-                  <CalendarDays className="size-3.5" />
-                  Corte: {fechaCorta(fechaConsultada)}
-                </Badge>
-              )}
-            </div>
-          </div>
+          <ResumenCabecera
+            icon={ClipboardList}
+            titulo="CUADRO RESUMEN DE INVENTARIO BASE ACTIVA"
+            descripcion="Lotes, movimientos y existencias de materia prima en kilogramos."
+            etiquetaCorte="Corte:"
+            fechaCorte={
+              consultado && hayRegistros ? fechaCorta(fechaConsultada) : null
+            }
+          />
 
           {/* FILTROS */}
           <div className="no-print rounded-xl border bg-card p-4 shadow-sm">
@@ -629,9 +613,7 @@ export function ResumenPlanillaModule({
                     />
                     <ComboboxContent>
                       <ComboboxList>
-                        <ComboboxItem value="__all__">
-                          Todos
-                        </ComboboxItem>
+                        <ComboboxItem value="__all__">Todos</ComboboxItem>
                         {contexto.productos.map(p => (
                           <ComboboxItem key={p.id} value={p.id}>
                             {p.codigo} — {p.descripcion}
@@ -650,7 +632,9 @@ export function ResumenPlanillaModule({
                   <Combobox
                     value={loteId}
                     items={["__all__", ...productoLotes.map(l => l.id)]}
-                    onValueChange={v => setLoteId(v === "__all__" ? "" : (v ?? ""))}
+                    onValueChange={v =>
+                      setLoteId(v === "__all__" ? "" : (v ?? ""))
+                    }
                     itemToStringLabel={val => {
                       if (!val || val === "__all__") return "Todos";
                       return loteLabel.get(val) ?? "";
@@ -661,9 +645,7 @@ export function ResumenPlanillaModule({
                     />
                     <ComboboxContent>
                       <ComboboxList>
-                        <ComboboxItem value="__all__">
-                          Todos
-                        </ComboboxItem>
+                        <ComboboxItem value="__all__">Todos</ComboboxItem>
                         {productoLotes.map(l => (
                           <ComboboxItem key={l.id} value={l.id}>
                             {l.codigo}
@@ -699,29 +681,11 @@ export function ResumenPlanillaModule({
                   />
                 </div>
 
-                <div className="flex items-end gap-2">
-                  <Button
-                    onClick={consultar}
-                    disabled={cargando}
-                    className="h-8 gap-1.5 bg-emerald-600 text-[11px] text-white hover:bg-emerald-700 shadow-md shadow-emerald-900/20 font-semibold">
-                    {cargando ? (
-                      <span className="flex items-center gap-2">
-                        <Skeleton className="size-4 animate-spin rounded-full bg-white/40" />
-                        Consultando...
-                      </span>
-                    ) : (
-                      <Search className="h-3.5 w-3.5" />
-                    )}
-                    Consultar
-                  </Button>
-                  <Button
-                    onClick={limpiar}
-                    variant="outline"
-                    className="h-8 gap-1.5 text-[11px] text-muted-foreground hover:text-foreground">
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Limpiar
-                  </Button>
-                </div>
+                <BotonesConsultarLimpiar
+                  cargando={cargando}
+                  onConsultar={consultar}
+                  onLimpiar={limpiar}
+                />
 
                 <div className="flex items-center gap-2 sm:col-span-2 md:col-span-5">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -826,87 +790,19 @@ export function ResumenPlanillaModule({
               </Card>
 
               {filas.length > 0 && (
-                <div className="no-print flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-[11px] text-muted-foreground">
-                    Mostrando{" "}
-                    <span className="font-semibold text-foreground">
-                      {table.getRowModel().rows.length > 0
-                        ? pagination.pageIndex * pagination.pageSize + 1
-                        : 0}
-                      –
-                      {Math.min(
-                        (pagination.pageIndex + 1) * pagination.pageSize,
-                        filas.length,
-                      )}
-                    </span>{" "}
-                    de{" "}
-                    <span className="font-semibold text-foreground">
-                      {filas.length}
-                    </span>{" "}
-                    registros
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Select
-                      value={String(pagination.pageSize)}
-                      onValueChange={v =>
-                        setPagination({ pageIndex: 0, pageSize: Number(v) })
-                      }>
-                      <SelectTrigger className="h-8 w-[110px] text-[11px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {PAGE_SIZES.map(ps => (
-                            <SelectItem
-                              key={ps}
-                              value={String(ps)}
-                              className="text-[11px]">
-                              {ps} por página
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        disabled={!table.getCanPreviousPage()}
-                        onClick={() => table.firstPage()}
-                        aria-label="Primera página">
-                        <ChevronsLeft className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        disabled={!table.getCanPreviousPage()}
-                        onClick={() => table.previousPage()}
-                        aria-label="Página anterior">
-                        <ChevronLeft className="h-3.5 w-3.5" />
-                      </Button>
-                      <span className="px-2 text-[11px] font-medium text-muted-foreground">
-                        {pagination.pageIndex + 1} / {table.getPageCount()}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        disabled={!table.getCanNextPage()}
-                        onClick={() => table.nextPage()}
-                        aria-label="Página siguiente">
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        disabled={!table.getCanNextPage()}
-                        onClick={() => table.lastPage()}
-                        aria-label="Última página">
-                        <ChevronsRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <PaginacionTabla
+                  className="no-print"
+                  pageIndex={pagination.pageIndex}
+                  totalPaginas={table.getPageCount()}
+                  pageSize={pagination.pageSize}
+                  total={filas.length}
+                  onPageSizeChange={n =>
+                    setPagination({ pageIndex: 0, pageSize: n })
+                  }
+                  onPrevious={() => table.previousPage()}
+                  onNext={() => table.nextPage()}
+                  pageSizes={PAGE_SIZES}
+                />
               )}
             </>
           )}

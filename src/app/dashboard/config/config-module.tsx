@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   Pencil,
   Plus,
@@ -8,11 +8,13 @@ import {
   CalendarDays,
   MapPin,
   Power,
+  Trash2,
   Upload,
   X,
   ImagePlus,
   ClipboardList,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +35,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -48,6 +60,9 @@ import {
   guardarEstablecimiento,
   guardarPeriodo,
   guardarEmpresaReporte,
+  eliminarEmpresa,
+  eliminarEstablecimiento,
+  eliminarPeriodo,
 } from "@/actions/config.actions";
 import type { ConfiguracionView } from "./page";
 import Image from "next/image";
@@ -55,7 +70,16 @@ import { useRef } from "react";
 
 const initialConfigState = { success: false, message: "" };
 
+type EntidadConfig = "empresa" | "periodo" | "establecimiento";
+
+const ETIQUETA_ELIMINAR: Record<EntidadConfig, string> = {
+  empresa: "la empresa",
+  periodo: "el periodo",
+  establecimiento: "el establecimiento",
+};
+
 export default function ConfigModule({ data }: { data: ConfiguracionView }) {
+  const router = useRouter();
   const [tab, setTab] = useState("empresa");
   const [empresaOpen, setEmpresaOpen] = useState(false);
   const [periodoOpen, setPeriodoOpen] = useState(false);
@@ -70,6 +94,12 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
     ConfiguracionView["establecimientos"][number] | null
   >(null);
   const [pending, startTransition] = useTransition();
+  const [eliminar, setEliminar] = useState<{
+    entidad: EntidadConfig;
+    id: string;
+    nombre: string;
+  } | null>(null);
+  const [eliminando, setEliminando] = useState(false);
 
   const empresaActiva = useMemo(
     () => data.empresas.find(e => e.activo) ?? data.empresas[0],
@@ -78,6 +108,20 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
   const [empresaReporte, setEmpresaReporte] = useState<string>(
     empresaActiva?.id ?? "",
   );
+
+  const tabEfectivo = data.empresas.length === 0 ? "empresa" : tab;
+  const empresaReporteEfectivo = data.empresas.some(
+    e => e.id === empresaReporte,
+  )
+    ? empresaReporte
+    : (data.empresas[0]?.id ?? "");
+
+  const refrescar = () => {
+    setEmpresaEdit(null);
+    setPeriodoEdit(null);
+    setEstablecimientoEdit(null);
+    router.refresh();
+  };
 
   const cambiarEstado = (
     action: (fd: FormData) => Promise<{ success: boolean; message: string }>,
@@ -89,21 +133,39 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
     fd.set("activo", String(activo));
     startTransition(async () => {
       const result = await action(fd);
-      result.success
-        ? toast.success(result.message)
-        : toast.error(result.message);
+      if (result.success) {
+        toast.success(result.message);
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
     });
   };
 
-  useEffect(() => {
-    if (!data.empresas.length && tab !== "empresa") setTab("empresa");
-  }, [data.empresas.length, tab]);
-
-  useEffect(() => {
-    if (empresaReporte && !data.empresas.some(e => e.id === empresaReporte)) {
-      setEmpresaReporte(data.empresas[0]?.id ?? "");
-    }
-  }, [data.empresas, empresaReporte]);
+  const confirmarEliminar = () => {
+    if (!eliminar) return;
+    const objetivo = eliminar;
+    setEliminando(true);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("id", objetivo.id);
+      const action =
+        objetivo.entidad === "empresa"
+          ? eliminarEmpresa
+          : objetivo.entidad === "periodo"
+            ? eliminarPeriodo
+            : eliminarEstablecimiento;
+      const result = await action(fd);
+      setEliminando(false);
+      if (result.success) {
+        toast.success(result.message);
+        setEliminar(null);
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    });
+  };
 
   return (
     <div className="w-full space-y-6 p-4 sm:p-6">
@@ -164,7 +226,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors ${
-                tab === t.key
+                tabEfectivo === t.key
                   ? t.color === "emerald"
                     ? "border-b-2 border-emerald-600 font-semibold text-emerald-600"
                     : t.color === "sky"
@@ -181,7 +243,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
         </div>
 
         {/* ── EMPRESA ── */}
-        {tab === "empresa" && (
+        {tabEfectivo === "empresa" && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -236,6 +298,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            aria-label="Editar"
                             onClick={() => {
                               setEmpresaEdit(e);
                               setEmpresaOpen(true);
@@ -245,6 +308,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            aria-label={e.activo ? "Desactivar" : "Activar"}
                             disabled={pending}
                             onClick={() =>
                               cambiarEstado(
@@ -254,6 +318,21 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                               )
                             }>
                             <Power className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Eliminar ${e.razonSocial}`}
+                            disabled={pending || eliminando}
+                            className="text-red-600 hover:bg-red-600 hover:text-white dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+                            onClick={() =>
+                              setEliminar({
+                                entidad: "empresa",
+                                id: e.id,
+                                nombre: e.razonSocial,
+                              })
+                            }>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -266,7 +345,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
         )}
 
         {/* ── PERIODOS ── */}
-        {tab === "periodo" && (
+        {tabEfectivo === "periodo" && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -328,6 +407,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            aria-label="Editar"
                             onClick={() => {
                               setPeriodoEdit(p);
                               setPeriodoOpen(true);
@@ -337,6 +417,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            aria-label={p.activo ? "Desactivar" : "Activar"}
                             disabled={pending}
                             onClick={() =>
                               cambiarEstado(
@@ -346,6 +427,21 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                               )
                             }>
                             <Power className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Eliminar periodo ${p.anio}`}
+                            disabled={pending || eliminando}
+                            className="text-red-600 hover:bg-red-600 hover:text-white dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+                            onClick={() =>
+                              setEliminar({
+                                entidad: "periodo",
+                                id: p.id,
+                                nombre: String(p.anio),
+                              })
+                            }>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -358,7 +454,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
         )}
 
         {/* ── ESTABLECIMIENTOS ── */}
-        {tab === "establecimiento" && (
+        {tabEfectivo === "establecimiento" && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -426,6 +522,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            aria-label="Editar"
                             onClick={() => {
                               setEstablecimientoEdit(e);
                               setEstablecimientoOpen(true);
@@ -435,6 +532,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                           <Button
                             variant="ghost"
                             size="icon-sm"
+                            aria-label={e.activo ? "Desactivar" : "Activar"}
                             disabled={pending}
                             onClick={() =>
                               cambiarEstado(
@@ -444,6 +542,21 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
                               )
                             }>
                             <Power className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Eliminar ${e.nombre}`}
+                            disabled={pending || eliminando}
+                            className="text-red-600 hover:bg-red-600 hover:text-white dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+                            onClick={() =>
+                              setEliminar({
+                                entidad: "establecimiento",
+                                id: e.id,
+                                nombre: e.nombre,
+                              })
+                            }>
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -456,7 +569,7 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
         )}
 
         {/* ── REPORTES ── */}
-        {tab === "reportes" && (
+        {tabEfectivo === "reportes" && (
           <Card>
             <CardHeader>
               <CardTitle>Configuración de reportes</CardTitle>
@@ -467,13 +580,13 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
             </CardHeader>
             <CardContent className="space-y-4">
               {data.empresas
-                .filter(e => e.id === empresaReporte)
+                .filter(e => e.id === empresaReporteEfectivo)
                 .map(e => (
                   <ReporteConfigForm
-                    key={e.id}
+                    key={`${e.id}-${e.responsableReporte ?? ""}-${e.cargoReporte ?? ""}-${e.logoUrl ?? ""}-${e.firmaUrl ?? ""}`}
                     empresa={e}
                     empresas={data.empresas}
-                    empresaReporte={empresaReporte}
+                    empresaReporte={empresaReporteEfectivo}
                     setEmpresaReporte={setEmpresaReporte}
                   />
                 ))}
@@ -483,24 +596,55 @@ export default function ConfigModule({ data }: { data: ConfiguracionView }) {
       </div>
 
       <EmpresaDialog
+        key={`empresa-${empresaEdit?.id ?? "nueva"}-${empresaOpen}`}
         open={empresaOpen}
         onOpenChange={setEmpresaOpen}
         initial={empresaEdit}
+        onGuardado={refrescar}
       />
       <PeriodoDialog
+        key={`periodo-${periodoEdit?.id ?? "nuevo"}-${periodoOpen}`}
         open={periodoOpen}
         onOpenChange={setPeriodoOpen}
         initial={periodoEdit}
         empresas={data.empresas}
         defaultEmpresaId={empresaActiva?.id}
+        onGuardado={refrescar}
       />
       <EstablecimientoDialog
+        key={`establecimiento-${establecimientoEdit?.id ?? "nuevo"}-${establecimientoOpen}`}
         open={establecimientoOpen}
         onOpenChange={setEstablecimientoOpen}
         initial={establecimientoEdit}
         empresas={data.empresas}
         defaultEmpresaId={empresaActiva?.id}
+        onGuardado={refrescar}
       />
+
+      <AlertDialog
+        open={!!eliminar}
+        onOpenChange={o => !o && !eliminando && setEliminar(null)}>
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Eliminar {eliminar ? ETIQUETA_ELIMINAR[eliminar.entidad] : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará permanentemente &quot;{eliminar?.nombre}&quot;. Si tiene
+              datos asociados no se podrá eliminar y tendrás que desactivarlo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={eliminando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={eliminando}
+              onClick={confirmarEliminar}>
+              {eliminando ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -562,8 +706,8 @@ function ReporteConfigForm({
           const r = await guardarEmpresaReporte(fd);
           r.success
             ? (toast.success(r.message),
-              setLogoPreview(empresa.logoUrl ?? ""),
-              setFirmaPreview(empresa.firmaUrl ?? ""))
+              setLogoPreview(r.logoUrl ?? ""),
+              setFirmaPreview(r.firmaUrl ?? ""))
             : toast.error(r.message);
         })
       }
@@ -623,7 +767,7 @@ function ReporteConfigForm({
         {/* Logo */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Logo de empresa</Label>
-          <div
+          <label
             onDragOver={e => {
               e.preventDefault();
               setLogoDrag(true);
@@ -633,7 +777,6 @@ function ReporteConfigForm({
               setLogoDrag(false);
               handleDrop(e, setLogoPreview, logoRef);
             }}
-            onClick={() => logoRef.current?.click()}
             className={`
               group relative flex h-36 cursor-pointer flex-col items-center justify-center
               rounded-xl border-2 border-dashed transition-all duration-200
@@ -682,16 +825,17 @@ function ReporteConfigForm({
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
               name="logo"
-              className="hidden"
+              className="sr-only"
+              aria-label="Subir logo de empresa"
               onChange={e => preview(e.target.files?.[0], setLogoPreview)}
             />
-          </div>
+          </label>
         </div>
 
         {/* Firma */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Firma (responsable)</Label>
-          <div
+          <label
             onDragOver={e => {
               e.preventDefault();
               setFirmaDrag(true);
@@ -701,7 +845,6 @@ function ReporteConfigForm({
               setFirmaDrag(false);
               handleDrop(e, setFirmaPreview, firmaRef);
             }}
-            onClick={() => firmaRef.current?.click()}
             className={`
               group relative flex h-36 cursor-pointer flex-col items-center justify-center
               rounded-xl border-2 border-dashed transition-all duration-200
@@ -750,13 +893,46 @@ function ReporteConfigForm({
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
               name="firma"
-              className="hidden"
+              className="sr-only"
+              aria-label="Subir firma del responsable"
               onChange={e => preview(e.target.files?.[0], setFirmaPreview)}
             />
-          </div>
+          </label>
         </div>
       </div>
     </form>
+  );
+}
+
+function EmpresaField({
+  empresas,
+  defaultValue,
+}: {
+  empresas: ConfiguracionView["empresas"];
+  defaultValue: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label>Empresa *</Label>
+      <Select name="empresaId" defaultValue={String(defaultValue)}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Seleccionar empresa">
+            {value =>
+              empresas.find(e => String(e.id) === String(value))
+                ?.razonSocial ?? String(value)
+            }
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="">Seleccionar</SelectItem>
+          {empresas.map(e => (
+            <SelectItem key={e.id} value={String(e.id)}>
+              {e.razonSocial}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -764,10 +940,12 @@ function EmpresaDialog({
   open,
   onOpenChange,
   initial,
+  onGuardado,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial: ConfiguracionView["empresas"][number] | null;
+  onGuardado: () => void;
 }) {
   const [pending, start] = useTransition();
   return (
@@ -783,7 +961,7 @@ function EmpresaDialog({
             start(async () => {
               const r = await guardarEmpresa(initialConfigState, fd);
               r.success
-                ? (toast.success(r.message), onOpenChange(false))
+                ? (toast.success(r.message), onGuardado(), onOpenChange(false))
                 : toast.error(r.message);
             })
           }
@@ -806,7 +984,7 @@ function EmpresaDialog({
               placeholder="BIOALTERNATIVA E&F S.A.C."
             />
           </div>
-          <Button className="w-full" disabled={pending}>
+          <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "Guardando..." : "Guardar empresa"}
           </Button>
         </form>
@@ -821,12 +999,14 @@ function PeriodoDialog({
   initial,
   empresas,
   defaultEmpresaId,
+  onGuardado,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial: ConfiguracionView["periodos"][number] | null;
   empresas: ConfiguracionView["empresas"];
   defaultEmpresaId?: string;
+  onGuardado: () => void;
 }) {
   const [pending, start] = useTransition();
   return (
@@ -842,37 +1022,16 @@ function PeriodoDialog({
             start(async () => {
               const r = await guardarPeriodo(initialConfigState, fd);
               r.success
-                ? (toast.success(r.message), onOpenChange(false))
+                ? (toast.success(r.message), onGuardado(), onOpenChange(false))
                 : toast.error(r.message);
             })
           }
           className="space-y-4">
           <input type="hidden" name="id" value={initial?.id ?? ""} />
-          <div className="space-y-1.5">
-            <Label>Empresa *</Label>
-            <Select
-              name="empresaId"
-              defaultValue={String(
-                initial?.empresaId ?? defaultEmpresaId ?? "",
-              )}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar empresa">
-                  {value =>
-                    empresas.find(e => String(e.id) === String(value))
-                      ?.razonSocial ?? String(value)
-                  }
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Seleccionar</SelectItem>
-                {empresas.map(e => (
-                  <SelectItem key={e.id} value={String(e.id)}>
-                    {e.razonSocial}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <EmpresaField
+            empresas={empresas}
+            defaultValue={initial?.empresaId ?? defaultEmpresaId ?? ""}
+          />
           <div className="space-y-1.5">
             <Label>Año *</Label>
             <Input
@@ -883,7 +1042,7 @@ function PeriodoDialog({
               defaultValue={initial?.anio ?? new Date().getFullYear()}
             />
           </div>
-          <Button className="w-full" disabled={pending}>
+          <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "Guardando..." : "Guardar periodo"}
           </Button>
         </form>
@@ -898,12 +1057,14 @@ function EstablecimientoDialog({
   initial,
   empresas,
   defaultEmpresaId,
+  onGuardado,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initial: ConfiguracionView["establecimientos"][number] | null;
   empresas: ConfiguracionView["empresas"];
   defaultEmpresaId?: string;
+  onGuardado: () => void;
 }) {
   const [pending, start] = useTransition();
   return (
@@ -919,37 +1080,16 @@ function EstablecimientoDialog({
             start(async () => {
               const r = await guardarEstablecimiento(initialConfigState, fd);
               r.success
-                ? (toast.success(r.message), onOpenChange(false))
+                ? (toast.success(r.message), onGuardado(), onOpenChange(false))
                 : toast.error(r.message);
             })
           }
           className="space-y-4">
           <input type="hidden" name="id" value={initial?.id ?? ""} />
-          <div className="space-y-1.5">
-            <Label>Empresa *</Label>
-            <Select
-              name="empresaId"
-              defaultValue={String(
-                initial?.empresaId ?? defaultEmpresaId ?? "",
-              )}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Seleccionar empresa">
-                  {value =>
-                    empresas.find(e => String(e.id) === String(value))
-                      ?.razonSocial ?? String(value)
-                  }
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Seleccionar</SelectItem>
-                {empresas.map(e => (
-                  <SelectItem key={e.id} value={String(e.id)}>
-                    {e.razonSocial}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <EmpresaField
+            empresas={empresas}
+            defaultValue={initial?.empresaId ?? defaultEmpresaId ?? ""}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Código</Label>
@@ -976,7 +1116,7 @@ function EstablecimientoDialog({
               placeholder="Dirección del establecimiento"
             />
           </div>
-          <Button className="w-full" disabled={pending}>
+          <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "Guardando..." : "Guardar establecimiento"}
           </Button>
         </form>

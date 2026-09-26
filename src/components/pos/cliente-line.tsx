@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef } from "react";
 import { toast } from "sonner";
 import { UserPlus, Users, Eraser } from "lucide-react";
 
@@ -36,7 +36,7 @@ export function ClienteLine({
   onAbrirNuevo,
   onAbrirDirectorio,
 }: Props) {
-  const [consultando, setConsultando] = useState(false);
+  const consultandoRef = useRef(false);
 
   const longitudDocumento =
     cliente.tipoDocumento === "RUC"
@@ -62,7 +62,7 @@ export function ClienteLine({
       toast.error("El RUC debe tener 11 dígitos");
       return;
     }
-    setConsultando(true);
+    consultandoRef.current = true;
     try {
       const res = await consultarDocumentoPos({ tipo, numero });
       if (res.cliente) {
@@ -93,7 +93,7 @@ export function ClienteLine({
         );
       }
     } finally {
-      setConsultando(false);
+      consultandoRef.current = false;
     }
   };
 

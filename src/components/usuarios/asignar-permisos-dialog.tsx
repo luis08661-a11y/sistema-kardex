@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, KeyRound } from "lucide-react";
 
@@ -46,6 +46,8 @@ export function AsignarPermisosDialog({ open, onOpenChange, rol, permisos }: Pro
       prev.includes(permId) ? prev.filter((id) => id !== permId) : [...prev, permId],
     );
   };
+
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
 
   const guardar = async () => {
     if (!rol) return;
@@ -97,7 +99,7 @@ export function AsignarPermisosDialog({ open, onOpenChange, rol, permisos }: Pro
                     className="flex items-center gap-3 rounded-lg border p-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
                   >
                     <Checkbox
-                      checked={selected.includes(perm.id)}
+                      checked={selectedSet.has(perm.id)}
                       onCheckedChange={() => toggle(perm.id)}
                     />
                     <div className="flex flex-col">

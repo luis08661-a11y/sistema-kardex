@@ -12,10 +12,6 @@ import {
   Loader2,
   Mail,
   Phone,
-  ChevronsLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ChevronsRightIcon,
 } from "lucide-react";
 import {
   columnVisibilityFeature,
@@ -38,13 +34,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -64,6 +53,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TIPO_DOCUMENTO_LABEL, type TipoDocumento } from "@/components/ventas/types";
 import { ClienteDialog } from "@/components/clientes/cliente-dialog";
+import { PaginacionTabla } from "@/components/shared/paginacion-tabla";
+import { ModuloCabecera } from "@/components/shared/modulo-cabecera";
 
 type Fila = ClientesPaginadasDTO["data"][number];
 
@@ -75,7 +66,7 @@ export function ClientesModule({ resultadoInicial }: { resultadoInicial: Cliente
   const [estado, setEstado] = useState("TODOS");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(
-    Math.min(resultadoInicial.pageSize || 10, 10),
+    () => Math.min(resultadoInicial.pageSize || 10, 10),
   );
   const [resultado, setResultado] = useState<ClientesPaginadasDTO>(resultadoInicial);
   const [cargando, setCargando] = useState(false);
@@ -312,29 +303,21 @@ export function ClientesModule({ resultadoInicial }: { resultadoInicial: Cliente
   return (
     <div className="w-full space-y-6 p-4 sm:p-6">
       {/* ── HERO ── */}
-      <div className="relative overflow-hidden rounded-xl border border-slate-700/60 bg-[#0f172a] p-4 text-white shadow-lg shadow-emerald-500/10">
-        <div className="absolute -right-8 -top-2 h-32 w-32 rounded-full bg-emerald-500/5 blur-2xl" />
-        <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-emerald-500/5 blur-xl" />
-        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 shadow-sm shadow-emerald-500/30">
-              <Users className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold tracking-tight">
-                CLIENTES
-              </h1>
-              <p className="text-[14px] text-slate-400">
-                Gestione la cartera de clientes usada en ventas y cotizaciones.
-              </p>
-            </div>
-          </div>
-          <Button size="sm" className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-500" onClick={abrirNuevo}>
+      <ModuloCabecera
+        icon={Users}
+        titulo="CLIENTES"
+        descripcion="Gestione la cartera de clientes usada en ventas y cotizaciones."
+        acciones={
+          <Button
+            size="sm"
+            className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-500"
+            onClick={abrirNuevo}
+          >
             <Plus className="size-4" />
             Nuevo cliente
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* ── TABLA ── */}
       <Card>
@@ -432,53 +415,22 @@ export function ClientesModule({ resultadoInicial }: { resultadoInicial: Cliente
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="tabular-nums">
-                Página {pageIndex + 1} de {totalPaginas}
-              </span>
-              <span className="tabular-nums">
-                {((pageIndex + 1 - 1) * pageSize + 1).toLocaleString("es-PE")}–
-                {Math.min(
-                  pageIndex * pageSize + resultado.data.length,
-                  resultado.total,
-                ).toLocaleString("es-PE")}{" "}
-                de {resultado.total.toLocaleString("es-PE")}
-              </span>
-              <Select
-                value={String(pageSize)}
-                onValueChange={(v) => {
-                  setPageSize(Number(v));
-                  setPageIndex(0);
-                }}
-              >
-                <SelectTrigger size="sm" className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 50].map((n) => (
-                    <SelectItem key={n} value={String(n)}>
-                      {n}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-1.5">
-              <Button variant="outline" size="icon-sm" disabled={pageIndex === 0 || cargando} onClick={() => setPageIndex(0)}>
-                <ChevronsLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex === 0 || cargando} onClick={() => setPageIndex((p) => Math.max(0, p - 1))}>
-                <ChevronLeftIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex + 1 >= totalPaginas || cargando} onClick={() => setPageIndex((p) => p + 1)}>
-                <ChevronRightIcon className="size-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" disabled={pageIndex + 1 >= totalPaginas || cargando} onClick={() => setPageIndex(totalPaginas - 1)}>
-                <ChevronsRightIcon className="size-4" />
-              </Button>
-            </div>
-          </div>
+          <PaginacionTabla
+            pageIndex={pageIndex}
+            totalPaginas={totalPaginas}
+            pageSize={pageSize}
+            total={resultado.total}
+            onPageSizeChange={n => {
+              setPageSize(n);
+              setPageIndex(0);
+            }}
+            onPrevious={() => setPageIndex(p => Math.max(0, p - 1))}
+            onNext={() => setPageIndex(p => p + 1)}
+            pageSizes={[10, 20, 50]}
+            singular="cliente"
+            plural="clientes"
+            cargando={cargando}
+          />
         </CardContent>
       </Card>
 

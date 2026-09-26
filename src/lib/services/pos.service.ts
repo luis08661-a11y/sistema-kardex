@@ -696,10 +696,12 @@ export async function guardarVentaPosService(input: PosVentaInput): Promise<Vent
           stocks.set(fila.productoId, actual + num(fila._sum.cantidadKgRestante));
         }
 
+        const productosPorId = new Map(productos.map((p) => [p.id, p]));
+
         for (const d of input.detalles) {
           const stock = stocks.get(d.productoId) ?? 0;
           if (stock > 0 && d.cantidad > stock) {
-            const p = productos.find((x) => x.id === d.productoId);
+            const p = productosPorId.get(d.productoId);
             throw new Error(
               `Stock insuficiente de "${p?.descripcion ?? (d.descripcion || d.codigo)}": disponible ${stock}.`,
             );

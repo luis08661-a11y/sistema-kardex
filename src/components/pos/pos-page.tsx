@@ -252,14 +252,14 @@ export function PosPage({ datos }: Props) {
       ),
     [cart],
   );
-  useEffect(() => {
-    if (metodoPago === "EFECTIVO" && !recibidoTocadoRef.current) {
-      setRecibidoText(String(totales.total));
-    }
-  }, [totales.total, metodoPago]);
+  const recibidoTextoVisible =
+    metodoPago === "EFECTIVO" && !recibidoTocadoRef.current
+      ? String(totales.total)
+      : recibidoText;
   const recibido =
-    Number.isFinite(Number(recibidoText)) && Number(recibidoText) > 0
-      ? Number(recibidoText)
+    Number.isFinite(Number(recibidoTextoVisible)) &&
+    Number(recibidoTextoVisible) > 0
+      ? Number(recibidoTextoVisible)
       : 0;
   const vuelto = redondearDinero(recibido - totales.total);
 
@@ -531,10 +531,11 @@ export function PosPage({ datos }: Props) {
     );
   };
 
-  const actualizarTipoCambio = async () => {
+  const actualizarTipoCambio = async (opciones?: { seguir?: () => boolean }) => {
     setConsultandoTipoCambio(true);
     try {
       const res = await obtenerTipoCambioPos();
+      if (opciones?.seguir && !opciones.seguir()) return;
       if (res) {
         setTipoCambio(String(res.venta));
         toast.success(
@@ -544,14 +545,20 @@ export function PosPage({ datos }: Props) {
         toast.error("No se pudo obtener el tipo de cambio.");
       }
     } finally {
-      setConsultandoTipoCambio(false);
+      if (!opciones?.seguir || opciones.seguir()) {
+        setConsultandoTipoCambio(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (moneda === "USD") {
-      void actualizarTipoCambio();
-    }
+    if (moneda !== "USD") return;
+    let activo = true;
+    const seguir = () => activo;
+    void actualizarTipoCambio({ seguir });
+    return () => {
+      activo = false;
+    };
   }, [moneda]);
 
   const mostrarVencimiento =
@@ -967,7 +974,7 @@ export function PosPage({ datos }: Props) {
                           : "border-border text-foreground"
                       }`}
                       placeholder="0.00"
-                      value={recibidoText}
+                      value={recibidoTextoVisible}
                       onChange={e => {
                         recibidoTocadoRef.current = true;
                         setRecibidoText(e.target.value);
@@ -982,7 +989,7 @@ export function PosPage({ datos }: Props) {
                           ? "border-destructive/50 text-destructive"
                           : "border-border text-foreground"
                       }`}>
-                      {recibidoText ? formatearMonedaSoles(vuelto) : "S/ 0.00"}
+                      {recibidoTextoVisible ? formatearMonedaSoles(vuelto) : "S/ 0.00"}
                     </div>
                   </div>
                 </div>
@@ -1058,7 +1065,7 @@ export function PosPage({ datos }: Props) {
             {/* Botones de acción */}
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-pos-border pt-4">
               <Button
-                className="h-10 gap-2 rounded-lg bg-pos-blue text-sm font-black text-white shadow-lg shadow-pos-blue/20 transition-all hover:bg-pos-blue/90 active:scale-[0.98]"
+                className="h-10 gap-2 rounded-lg bg-pos-blue text-sm font-black text-white shadow-lg shadow-pos-blue/20 transition hover:bg-pos-blue/90 active:scale-[0.98]"
                 disabled={guardando}
                 onClick={() => void guardar(false)}>
                 {guardando ? (
@@ -1070,7 +1077,7 @@ export function PosPage({ datos }: Props) {
                 <Kbd>F8</Kbd>
               </Button>
               <Button
-                className="h-10 gap-2 rounded-lg bg-violet-600 text-sm font-black text-white shadow-lg shadow-violet-900/30 transition-all hover:bg-violet-500 active:scale-[0.98]"
+                className="h-10 gap-2 rounded-lg bg-violet-600 text-sm font-black text-white shadow-lg shadow-violet-900/30 transition hover:bg-violet-500 active:scale-[0.98]"
                 disabled={guardando}
                 onClick={() => void guardar(true)}>
                 <Printer className="size-4" />

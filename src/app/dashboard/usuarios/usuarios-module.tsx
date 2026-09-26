@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Users, Shield, KeyRound, Plus, Search, Pencil, Power,
-  Trash2, ShieldCheck, ChevronLeft, ChevronRight, ChevronsLeft,
-  ChevronsRight, User, CircleCheck, Loader2,
+  Trash2, ShieldCheck, User, CircleCheck, Loader2,
 } from "lucide-react";
 import {
   columnVisibilityFeature, createColumnHelper, createPaginatedRowModel,
@@ -33,6 +32,7 @@ import { RolDialog } from "@/components/usuarios/rol-dialog";
 import { PermisoDialog } from "@/components/usuarios/permiso-dialog";
 import { AsignarRolesDialog } from "@/components/usuarios/asignar-roles-dialog";
 import { PermisosPanel } from "@/components/usuarios/permisos-panel";
+import { PaginacionTabla } from "@/components/shared/paginacion-tabla";
 
 type UsuarioRow = {
   id: string; username: string; email: string; name: string;
@@ -303,18 +303,20 @@ export function UsuariosModule({ usuarios, roles, permisos, estadisticas }: Prop
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <span>Página {pageIndex + 1} de {Math.max(1, Math.ceil(usuariosFiltrados.length / pageSize))}</span>
-                  <span>{usuariosFiltrados.length} registro(s)</span>
-                </div>
-                <div className="flex gap-1.5">
-                  <Button variant="outline" size="icon" className="size-8" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}><ChevronsLeft className="size-4" /></Button>
-                  <Button variant="outline" size="icon" className="size-8" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}><ChevronLeft className="size-4" /></Button>
-                  <Button variant="outline" size="icon" className="size-8" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}><ChevronRight className="size-4" /></Button>
-                  <Button variant="outline" size="icon" className="size-8" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}><ChevronsRight className="size-4" /></Button>
-                </div>
-              </div>
+              <PaginacionTabla
+                pageIndex={pageIndex}
+                totalPaginas={Math.max(1, Math.ceil(usuariosFiltrados.length / pageSize))}
+                pageSize={pageSize}
+                total={usuariosFiltrados.length}
+                onPageSizeChange={n => {
+                  setPageSize(n);
+                  setPageIndex(0);
+                }}
+                onPrevious={() => table.previousPage()}
+                onNext={() => table.nextPage()}
+                singular="usuario"
+                plural="usuarios"
+              />
             </CardContent>
           </Card>
         </div>

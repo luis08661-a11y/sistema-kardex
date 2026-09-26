@@ -1,6 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
+import Link from "next/link"
 
 import { logoutAction } from "@/actions/auth.actions"
 
@@ -101,7 +102,7 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem render={<a href="/config/usuarios" />}>
+              <DropdownMenuItem render={<Link href="/dashboard/usuarios" />}>
                 <UserCogIcon />
                 Mi cuenta
               </DropdownMenuItem>

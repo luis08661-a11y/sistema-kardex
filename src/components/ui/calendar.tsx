@@ -198,7 +198,7 @@ function CalendarDayButton({
     <Button
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString(locale?.code)}
+      data-day={day.date.toLocaleDateString(locale?.code ?? "es-PE", { timeZone: "America/Lima" })}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&

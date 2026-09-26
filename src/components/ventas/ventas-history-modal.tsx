@@ -16,8 +16,6 @@ import {
   Receipt,
   CalendarDays,
   Inbox,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import {
   createColumnHelper,
@@ -79,6 +77,7 @@ import {
 } from "@/components/ventas/types";
 import { EnviarCorreoDialog } from "@/components/ventas/enviar-correo-dialog";
 import { EnviarWhatsAppDialog } from "@/components/ventas/enviar-whatsapp-dialog";
+import { PaginacionModal } from "@/components/shared/paginacion-modal";
 
 export type Fila = VentasPaginadasDTO["data"][number];
 
@@ -145,6 +144,16 @@ export function VentasHistoryModal({
     fechaDesde: fechaISO(),
     fechaHasta: fechaISO(),
   }));
+  const hoyLabel = useMemo(
+    () =>
+      new Date().toLocaleDateString("es-PE", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        timeZone: "America/Lima",
+      }),
+    [],
+  );
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [resultado, setResultado] = useState<VentasPaginadasDTO>({
@@ -579,11 +588,7 @@ export function VentasHistoryModal({
                     Hoy
                   </span>
                   <span className="block text-xs font-medium text-slate-300 tabular-nums">
-                    {new Date().toLocaleDateString("es-PE", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {hoyLabel}
                   </span>
                 </div>
               </div>
@@ -858,13 +863,13 @@ export function VentasHistoryModal({
                         </td>
                       </tr>
                     ) : (
-                      detalleVisibles.map((d, i) => (
+                      detalleVisibles.map(d => (
                         <tr
-                          key={i}
+                          key={`${d.descripcion}-${d.unidadMedida}-${d.cantidad}-${d.precioUnitario}`}
                           className="border-t border-slate-700/50 text-slate-200 last:border-b-0">
-<td className="px-3 py-2 text-xs font-medium text-slate-100">
-  {d.descripcion || "Producto"}
-</td>
+                          <td className="px-3 py-2 text-xs font-medium text-slate-100">
+                            {d.descripcion || "Producto"}
+                          </td>
                           <td className="px-3 py-2 text-center text-xs">
                             <span className="inline-block rounded border border-slate-600/80 bg-slate-800/80 px-1.5 py-px text-[10px] font-semibold uppercase text-slate-300">
                               {d.unidadMedida || "—"}
@@ -884,49 +889,17 @@ export function VentasHistoryModal({
                     )}
                   </tbody>
                 </table>
-                {detalleItems.length > DETALLE_POR_PAGINA && (
-                  <div className="flex items-center justify-between border-t border-slate-700/60 bg-[#1b2b42] px-3 py-1.5">
-                    <span className="text-[11px] font-medium text-slate-400">
-                      {paginaDetalleSegura * DETALLE_POR_PAGINA + 1}–
-                      {Math.min(
-                        (paginaDetalleSegura + 1) * DETALLE_POR_PAGINA,
-                        detalleItems.length,
-                      )}{" "}
-                      de {detalleItems.length} productos
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={paginaDetalleSegura === 0}
-                        onClick={() =>
-                          setDetallePagina(p => Math.max(0, p - 1))
-                        }
-                        className="text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40">
-                        <ChevronLeft className="size-3.5" />
-                      </Button>
-                      <span className="px-1 text-[11px] font-semibold text-slate-300 tabular-nums">
-                        {paginaDetalleSegura + 1} / {totalPagDetalle}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={
-                          paginaDetalleSegura + 1 === totalPagDetalle
-                        }
-                        onClick={() =>
-                          setDetallePagina(p =>
-                            Math.min(totalPagDetalle - 1, p + 1),
-                          )
-                        }
-                        className="text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-40">
-                        <ChevronRight className="size-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <PaginacionModal
+                  pagina={paginaDetalleSegura}
+                  totalPaginas={totalPagDetalle}
+                  porPagina={DETALLE_POR_PAGINA}
+                  total={detalleItems.length}
+                  onCambioPagina={setDetallePagina}
+                  tema="oscuro"
+                  contenedor="flex items-center justify-between border-t border-slate-700/60 bg-[#1b2b42] px-3 py-1.5"
+                  etiquetaAnterior="Página anterior de detalles"
+                  etiquetaSiguiente="Página siguiente de detalles"
+                />
               </div>
 
               {/* Totales */}

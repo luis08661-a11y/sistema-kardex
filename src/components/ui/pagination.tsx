@@ -20,26 +20,27 @@ export function Pagination({
   if (totalPages <= 1) return null
 
   const getPageNumbers = () => {
-    const pages: (number | "...")[] = []
+    const pages: { key: string; label: number | "..." }[] = []
     const maxVisible = 5
+    const push = (label: number | "...", key: string) => pages.push({ key, label })
 
     if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i)
+      for (let i = 1; i <= totalPages; i++) push(i, `p${i}`)
     } else {
       if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) pages.push(i)
-        pages.push("...")
-        pages.push(totalPages)
+        for (let i = 1; i <= 4; i++) push(i, `p${i}`)
+        push("...", "ellipsis-start")
+        push(totalPages, `p${totalPages}`)
       } else if (currentPage >= totalPages - 2) {
-        pages.push(1)
-        pages.push("...")
-        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i)
+        push(1, "p1")
+        push("...", "ellipsis-start")
+        for (let i = totalPages - 3; i <= totalPages; i++) push(i, `p${i}`)
       } else {
-        pages.push(1)
-        pages.push("...")
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i)
-        pages.push("...")
-        pages.push(totalPages)
+        push(1, "p1")
+        push("...", "ellipsis-start")
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) push(i, `p${i}`)
+        push("...", "ellipsis-end")
+        push(totalPages, `p${totalPages}`)
       }
     }
     return pages
@@ -50,25 +51,26 @@ export function Pagination({
       <Button
         variant="outline"
         size="icon-sm"
+        aria-label="Página anterior"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
 
-      {getPageNumbers().map((page, i) =>
-        page === "..." ? (
-          <span key={`ellipsis-${i}`} className="flex size-8 items-center justify-center">
+      {getPageNumbers().map(({ key, label }) =>
+        label === "..." ? (
+          <span key={key} className="flex size-8 items-center justify-center">
             <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
           </span>
         ) : (
           <Button
-            key={page}
-            variant={currentPage === page ? "default" : "outline"}
+            key={key}
+            variant={currentPage === label ? "default" : "outline"}
             size="icon-sm"
-            onClick={() => onPageChange(page)}
+            onClick={() => onPageChange(label)}
           >
-            {page}
+            {label}
           </Button>
         ),
       )}
@@ -76,6 +78,7 @@ export function Pagination({
       <Button
         variant="outline"
         size="icon-sm"
+        aria-label="Página siguiente"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >

@@ -70,7 +70,7 @@ export function EnviarWhatsAppDialog({ venta, open, onOpenChange }: Props) {
       }
       setResultado(res.data);
       if (res.data.enlaceWhatsApp) {
-        window.open(res.data.enlaceWhatsApp, "_blank");
+        window.open(res.data.enlaceWhatsApp, "_blank", "noopener,noreferrer");
       }
       toast.success(res.message);
     } catch (e) {

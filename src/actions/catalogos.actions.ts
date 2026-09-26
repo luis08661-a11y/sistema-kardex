@@ -25,6 +25,22 @@ import {
 export type CatalogoState = { success: boolean; message: string };
 
 function ok(message: string): CatalogoState { return { success: true, message }; }
+
+const TIPO_NORMALIZADO: Record<string, string> = {
+  unidades: "unidad",
+  presentaciones: "presentacion",
+  existencias: "existencia",
+  categorias: "categoria",
+  marcas: "marca",
+  afectaciones: "afectacion",
+  operaciones: "operacion",
+  almacenamientos: "almacenamiento",
+};
+
+function normalizarTipo(tipo: string) {
+  return TIPO_NORMALIZADO[tipo] ?? tipo;
+}
+
 function fail(error: unknown): CatalogoState {
   if (typeof error === "object" && error && "code" in error && error.code === "P2003") {
     return { success: false, message: "No se puede eliminar: el registro está en uso por otras tablas." };
@@ -55,7 +71,7 @@ export async function crearPresentacion(_prev: CatalogoState, formData: FormData
 }
 
 export async function actualizarCatalogo(_prev: CatalogoState, formData: FormData): Promise<CatalogoState> {
-  const tipo = String(formData.get("tipo") ?? "");
+  const tipo = normalizarTipo(String(formData.get("tipo") ?? ""));
   const id = String(formData.get("id") ?? "");
   if (!tipo || !id) return fail("Datos inválidos");
   const parsed = unidadMedidaSchema.safeParse({ codigo: String(formData.get("codigo") ?? ""), nombre: String(formData.get("nombre") ?? "") });
@@ -64,7 +80,7 @@ export async function actualizarCatalogo(_prev: CatalogoState, formData: FormDat
 }
 
 export async function eliminarCatalogo(_prev: CatalogoState, formData: FormData): Promise<CatalogoState> {
-  const tipo = String(formData.get("tipo") ?? "");
+  const tipo = normalizarTipo(String(formData.get("tipo") ?? ""));
   const id = String(formData.get("id") ?? "");
   if (!tipo || !id) return fail("Datos inválidos");
   try { await eliminarCatalogoService(tipo, id); revalidatePath("/dashboard/catalogos"); return ok("Registro eliminado"); } catch (e) { return fail(e); }
@@ -107,7 +123,7 @@ export async function crearAlmacenamiento(_prev: CatalogoState, formData: FormDa
 }
 
 export async function cambiarEstadoCatalogo(_prev: CatalogoState, formData: FormData): Promise<CatalogoState> {
-  const tipo = String(formData.get("tipo") ?? "");
+  const tipo = normalizarTipo(String(formData.get("tipo") ?? ""));
   const id = String(formData.get("id") ?? "");
   const activo = String(formData.get("activo")) === "true";
   if (!tipo || !id) return fail("Datos inválidos");

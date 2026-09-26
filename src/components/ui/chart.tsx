@@ -58,9 +58,13 @@ function ChartContainer({
 }) {
   const uniqueId = React.useId()
   const chartId = `chart-${id ?? uniqueId.replace(/:/g, "")}`
+  const chartContextValue = React.useMemo(
+    () => ({ config }) as ChartContextProps,
+    [config]
+  )
 
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={chartContextValue}>
       <div
         data-slot="chart"
         data-chart={chartId}
@@ -146,45 +150,35 @@ function ChartTooltipContent({
   >) {
   const { config } = useChart()
 
-  const tooltipLabel = React.useMemo(() => {
-    if (hideLabel || !payload?.length) {
-      return null
-    }
-
-    const [item] = payload
-    const key = `${labelKey ?? item?.dataKey ?? item?.name ?? "value"}`
-    const itemConfig = getPayloadConfigFromPayload(config, item, key)
-    const value =
-      !labelKey && typeof label === "string"
-        ? (config[label]?.label ?? label)
-        : itemConfig?.label
-
-    if (labelFormatter) {
-      return (
-        <div className={cn("font-medium", labelClassName)}>
-          {labelFormatter(value, payload)}
-        </div>
-      )
-    }
-
-    if (!value) {
-      return null
-    }
-
-    return <div className={cn("font-medium", labelClassName)}>{value}</div>
-  }, [
-    label,
-    labelFormatter,
-    payload,
-    hideLabel,
-    labelClassName,
-    config,
-    labelKey,
-  ])
-
   if (!active || !payload?.length) {
     return null
   }
+
+  const tooltipLabel: React.ReactNode = !hideLabel
+    ? (() => {
+        const [item] = payload
+        const key = `${labelKey ?? item?.dataKey ?? item?.name ?? "value"}`
+        const itemConfig = getPayloadConfigFromPayload(config, item, key)
+        const value =
+          !labelKey && typeof label === "string"
+            ? (config[label]?.label ?? label)
+            : itemConfig?.label
+
+        if (labelFormatter) {
+          return (
+            <div className={cn("font-medium", labelClassName)}>
+              {labelFormatter(value, payload)}
+            </div>
+          )
+        }
+
+        if (!value) {
+          return null
+        }
+
+        return <div className={cn("font-medium", labelClassName)}>{value}</div>
+      })()
+    : null
 
   const nestLabel = payload.length === 1 && indicator !== "dot"
 
@@ -206,7 +200,7 @@ function ChartTooltipContent({
 
             return (
               <div
-                key={index}
+                key={key}
                 className={cn(
                   "flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground",
                   indicator === "dot" && "items-center"
@@ -304,7 +298,7 @@ function ChartLegendContent({
 
           return (
             <div
-              key={index}
+              key={key}
               className={cn(
                 "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
               )}

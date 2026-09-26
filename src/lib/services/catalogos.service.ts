@@ -106,6 +106,7 @@ export async function crearAlmacenamientoService(input: AlmacenamientoInput) {
 export async function cambiarEstadoCatalogoService(tipo: string, id: string, activo: boolean) {
   switch (tipo) {
     case "unidad": return prisma.unidadMedida.update({ where: { id }, data: { activo } });
+    case "presentacion": return prisma.presentacionCatalogo.update({ where: { id }, data: { activo } });
     case "existencia": return prisma.tipoExistencia.update({ where: { id }, data: { activo } });
     case "categoria": return prisma.categoria.update({ where: { id }, data: { activo } });
     case "marca": return prisma.marca.update({ where: { id }, data: { activo } });

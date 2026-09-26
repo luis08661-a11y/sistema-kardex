@@ -28,8 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import type { MovimientoPT, ProductoPT, TipoMovimientoPT } from "./producto-terminado-types"
-import { fechaInputPT } from "./producto-terminado-types"
+import type { ProductoPT, TipoMovimientoPT } from "./producto-terminado-types"
 import type { ProductoTerminadoForm } from "./use-producto-terminado-form"
 
 const EncabezadoSeccion = ({
@@ -153,13 +152,9 @@ export function SeccionProductoTerminado({
   )
 }
 
-export function SeccionDocumentoResponsable({
-  hoyStr,
-  editando,
-}: {
-  hoyStr: string
-  editando: MovimientoPT | null
-}) {
+export function SeccionDocumentoResponsable({ form }: { form: ProductoTerminadoForm }) {
+  const { campos, setCampo } = form
+
   return (
     <section className="order-2 space-y-0">
       <EncabezadoSeccion
@@ -179,7 +174,8 @@ export function SeccionDocumentoResponsable({
             name="fecha"
             type="date"
             required
-            defaultValue={editando ? fechaInputPT(editando.fecha) : hoyStr}
+            value={campos.fecha}
+            onChange={(e) => setCampo("fecha", e.target.value)}
             className="h-8"
           />
         </div>
@@ -190,7 +186,8 @@ export function SeccionDocumentoResponsable({
           <Input
             name="serie"
             placeholder="Ej: E001"
-            defaultValue={editando?.serie ?? ""}
+            value={campos.serie}
+            onChange={(e) => setCampo("serie", e.target.value)}
             className="h-8"
           />
         </div>
@@ -201,7 +198,8 @@ export function SeccionDocumentoResponsable({
           <Input
             name="numero"
             placeholder="Ej: 1852"
-            defaultValue={editando?.numero ?? ""}
+            value={campos.numero}
+            onChange={(e) => setCampo("numero", e.target.value)}
             className="h-8"
           />
         </div>
@@ -212,7 +210,8 @@ export function SeccionDocumentoResponsable({
           <Input
             name="observacion"
             placeholder="Ej: Almacén PT / Área Tricho"
-            defaultValue={editando?.observacion ?? ""}
+            value={campos.observacion}
+            onChange={(e) => setCampo("observacion", e.target.value)}
             className="h-8"
           />
         </div>
@@ -223,7 +222,8 @@ export function SeccionDocumentoResponsable({
           <Input
             name="responsableDespacho"
             placeholder="Ej: YOBER GARCIA"
-            defaultValue={editando?.responsableDespacho ?? ""}
+            value={campos.responsableDespacho}
+            onChange={(e) => setCampo("responsableDespacho", e.target.value)}
             className="h-8"
           />
         </div>
@@ -317,7 +317,7 @@ export function SeccionOperacionCantidad({ form }: { form: ProductoTerminadoForm
 }
 
 export function SeccionDestinoComprobante({ form }: { form: ProductoTerminadoForm }) {
-  const { motivo, setMotivo, ingCampo, setIngCampo, editando } = form
+  const { motivo, setMotivo, ingCampo, setIngCampo, campos, setCampo } = form
 
   return (
     <section className="order-4 space-y-3">
@@ -361,7 +361,8 @@ export function SeccionDestinoComprobante({ form }: { form: ProductoTerminadoFor
           <Input
             name="facturaGuia"
             placeholder="Ej: E001-1851"
-            defaultValue={editando?.facturaGuia ?? ""}
+            value={campos.facturaGuia}
+            onChange={(e) => setCampo("facturaGuia", e.target.value)}
             className="h-8 text-xs"
           />
         </div>
@@ -395,7 +396,8 @@ export function SeccionDestinoComprobante({ form }: { form: ProductoTerminadoFor
           <Input
             name="empresaDestino"
             placeholder="Ej: ALTERNATIVAS GLOBALES K & G S.A."
-            defaultValue={editando?.empresaDestino ?? ""}
+            value={campos.empresaDestino}
+            onChange={(e) => setCampo("empresaDestino", e.target.value)}
             className="h-8 text-xs"
           />
         </div>

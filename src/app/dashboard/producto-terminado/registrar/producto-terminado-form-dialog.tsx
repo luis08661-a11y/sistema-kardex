@@ -35,7 +35,6 @@ export function ProductoTerminadoFormDialog({ form, productos }: Props) {
     tipo,
     isPending,
     message,
-    hoyStr,
     submit,
   } = form
 
@@ -95,7 +94,7 @@ export function ProductoTerminadoFormDialog({ form, productos }: Props) {
           }}>
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-card p-5 text-xs text-foreground sm:p-5">
             <SeccionProductoTerminado form={form} productos={productos} />
-            <SeccionDocumentoResponsable hoyStr={hoyStr} editando={editando} />
+            <SeccionDocumentoResponsable form={form} />
             <SeccionOperacionCantidad form={form} />
             <SeccionDestinoComprobante form={form} />
           </div>

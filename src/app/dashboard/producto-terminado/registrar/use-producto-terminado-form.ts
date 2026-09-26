@@ -11,16 +11,31 @@ import {
   actualizarMovimientoPT,
 } from "@/actions/producto-terminado.actions"
 
-import type {
-  MovimientoPT,
-  ProductoTerminadoData,
-  StockInfoPT,
-  TipoMovimientoPT,
-  TipoMovimientoRegistro,
-} from "./producto-terminado-types"
+import type { MovimientoPT, ProductoTerminadoData, StockInfoPT, TipoMovimientoPT, TipoMovimientoRegistro } from "./producto-terminado-types"
+import { fechaInputPT } from "./producto-terminado-types"
 
 const FECHA_SIN_HORA = (fecha: Date) =>
   `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`
+
+export type CamposTextoPT = {
+  fecha: string
+  serie: string
+  numero: string
+  observacion: string
+  responsableDespacho: string
+  facturaGuia: string
+  empresaDestino: string
+}
+
+const CAMPOS_VACIOS: CamposTextoPT = {
+  fecha: "",
+  serie: "",
+  numero: "",
+  observacion: "",
+  responsableDespacho: "",
+  facturaGuia: "",
+  empresaDestino: "",
+}
 
 export function useProductoTerminadoForm(data: ProductoTerminadoData) {
   const [isPending, startTransition] = useTransition()
@@ -42,6 +57,15 @@ export function useProductoTerminadoForm(data: ProductoTerminadoData) {
   const [cantidad, setCantidad] = useState("")
   const [costoUnitario, setCostoUnitario] = useState("0")
   const [ingCampo, setIngCampo] = useState("seleccionar")
+  const [campos, setCampos] = useState<CamposTextoPT>(CAMPOS_VACIOS)
+
+  const setCampo = useCallback(
+    (campo: keyof CamposTextoPT, valor: string) =>
+      setCampos((prev) =>
+        prev[campo] === valor ? prev : { ...prev, [campo]: valor },
+      ),
+    [],
+  )
 
   const hoyStr = useMemo(() => FECHA_SIN_HORA(new Date()), [])
 
@@ -120,6 +144,15 @@ export function useProductoTerminadoForm(data: ProductoTerminadoData) {
         ),
       )
       setIngCampo(row.ingCampo ?? "seleccionar")
+      setCampos({
+        fecha: fechaInputPT(row.fecha),
+        serie: row.serie ?? "",
+        numero: row.numero ?? "",
+        observacion: row.observacion ?? "",
+        responsableDespacho: row.responsableDespacho ?? "",
+        facturaGuia: row.facturaGuia ?? "",
+        empresaDestino: row.empresaDestino ?? "",
+      })
     } else {
       setEditando(null)
       setTipo("ENTRADA")
@@ -134,6 +167,7 @@ export function useProductoTerminadoForm(data: ProductoTerminadoData) {
       setCantidad("")
       setCostoUnitario("0")
       setIngCampo("seleccionar")
+      setCampos({ ...CAMPOS_VACIOS, fecha: hoyStr })
       periodoIdRef.current = data.periodos[0]?.id ?? ""
       establecimientoIdRef.current = data.establecimientos[0]?.id ?? ""
     }
@@ -217,6 +251,8 @@ export function useProductoTerminadoForm(data: ProductoTerminadoData) {
     setCostoUnitario,
     ingCampo,
     setIngCampo,
+    campos,
+    setCampo,
     hoyStr,
     resolverTipoOperacionId,
     handleProductoChange,
